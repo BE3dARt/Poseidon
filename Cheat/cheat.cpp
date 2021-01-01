@@ -185,6 +185,8 @@ void Cheat::Renderer::RemoveInput()
 
 HRESULT Cheat::Renderer::PresentHook(IDXGISwapChain* swapChain, UINT syncInterval, UINT flags)
 { 
+    int distanceArray[64];
+
     if (!device)
     {
         ID3D11Texture2D* surface = nullptr;
@@ -459,6 +461,7 @@ HRESULT Cheat::Renderer::PresentHook(IDXGISwapChain* swapChain, UINT syncInterva
                                         auto const desc = actor->GetItemInfo()->Desc;
                                         if (!desc) continue;
                                         const int dist = localLoc.DistTo(location) * 0.01f;
+                                        distanceArray[0] = dist;
                                         char name[0x64];
                                         const int len = desc->Title->multi(name, 0x50);
                                         snprintf(name + len, sizeof(name) - len, " [%d]", dist);
@@ -543,7 +546,11 @@ HRESULT Cheat::Renderer::PresentHook(IDXGISwapChain* swapChain, UINT syncInterva
                                     char name[0x30];
                                     const int len = playerName.multi(name, 0x20);
                                     const int dist = localLoc.DistTo(origin) * 0.01f;
+
+                                    //distanceArray[(l-1)] = dist;
+                                    //distanceArray[0] = dist;
                                     snprintf(name + len, sizeof(name) - len, " [%d]", dist);
+
                                     const float adjust = height * 0.05f;
                                     FVector2D pos = { headPos.X, headPos.Y - adjust };
                                     Drawing::RenderText(name, pos, cfg.visuals.players.textCol);
@@ -869,6 +876,7 @@ HRESULT Cheat::Renderer::PresentHook(IDXGISwapChain* swapChain, UINT syncInterva
                                 {
                                     const FVector location = actor->K2_GetActorLocation();
                                     const int dist = localLoc.DistTo(location) * 0.01f;
+                                    //distanceArray[0] = dist;
 
                                     if (cfg.visuals.ships.bName && dist <= 1500)
                                     {
@@ -987,6 +995,7 @@ HRESULT Cheat::Renderer::PresentHook(IDXGISwapChain* swapChain, UINT syncInterva
 
                                 const FVector islandLoc = WorldMapData->WorldSpaceCameraPosition;
                                 const int dist = localLoc.DistTo(islandLoc) * 0.01f;
+
                                 if (dist > cfg.visuals.islands.intMaxDist) continue;
                                 FVector2D screen;
                                 if (localController->ProjectWorldLocationToScreen(islandLoc, screen))
@@ -1146,7 +1155,7 @@ HRESULT Cheat::Renderer::PresentHook(IDXGISwapChain* swapChain, UINT syncInterva
                     {
                         ImGui::PopStyleColor();
                         ImGui::PopStyleVar(2);
-                        ImGui::SetNextWindowSize(ImVec2(io.DisplaySize.x * 0.13f, io.DisplaySize.y * 0.25f), ImGuiCond_Once);
+                        ImGui::SetNextWindowSize(ImVec2(io.DisplaySize.x * 0.2f, io.DisplaySize.y * 0.25f), ImGuiCond_Once);
                         ImGui::Begin("PlayersList", 0, ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoScrollbar);
                         
                         auto shipsService = gameState->ShipService;
@@ -1193,7 +1202,12 @@ HRESULT Cheat::Renderer::PresentHook(IDXGISwapChain* swapChain, UINT syncInterva
                                         }
                                       
                                         ImGui::NextColumn();
-                                        const char* text = "text";
+
+                                        char name[0x64];
+                                        //sprintf_s(name, "%d m", distanceArray[(k-1)]);
+                                        sprintf_s(name, "%d m", distanceArray[0]);
+
+                                        const char* text = name;
                                         ImGui::Text(text);
                                         ImGui::NextColumn();
                                     }
