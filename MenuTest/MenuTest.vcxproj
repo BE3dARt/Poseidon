@@ -16,7 +16,7 @@
     <ProjectGuid>{ac9e0b15-ae16-4e96-af5d-6e97e05a2a53}</ProjectGuid>
     <RootNamespace>MenuTest</RootNamespace>
     <WindowsTargetPlatformVersion>10.0</WindowsTargetPlatformVersion>
-    <ProjectName>MenuTest</ProjectName>
+    <ProjectName>Poseidon</ProjectName>
   </PropertyGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'" Label="Configuration">
