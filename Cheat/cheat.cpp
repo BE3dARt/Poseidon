@@ -25,8 +25,6 @@ void Cheat::Hacks::OnWeaponFiredHook(UINT64 arg1, UINT64 arg2)
     return OnWeaponFiredOriginal(arg1, arg2);
 }
 
-
-
 void Cheat::Hacks::Init()
 {
     /*UFunction* fn = UObject::FindObject<UFunction>("Function Athena.ProjectileWeapon.OnWeaponFired");
@@ -503,8 +501,6 @@ HRESULT Cheat::Renderer::PresentHook(IDXGISwapChain* swapChain, UINT syncInterva
                                 const float height = abs(footPos.Y - headPos.Y);
                                 const float width = height * 0.4f;
 
-                                
-
                                 const bool bVisible = localController->LineOfSightTo(actor, cameraLoc, false);
                                 ImVec4 col;
                                 if (teammate) col = bVisible ? cfg.visuals.players.teamColorVis : cfg.visuals.players.teamColorInv;
@@ -540,8 +536,10 @@ HRESULT Cheat::Renderer::PresentHook(IDXGISwapChain* swapChain, UINT syncInterva
 
                                     auto const playerState = actor->PlayerState;
                                     if (!playerState) continue;
+
                                     const auto playerName = playerState->PlayerName;
                                     if (!playerName.Data) continue;
+
                                     char name[0x30];
                                     const int len = playerName.multi(name, 0x20);
                                     const int dist = localLoc.DistTo(origin) * 0.01f;
@@ -615,10 +613,7 @@ HRESULT Cheat::Renderer::PresentHook(IDXGISwapChain* swapChain, UINT syncInterva
                                    
                                 }
                             
-
                                 continue;
-                            
-                                
                             
                             }
                        
@@ -805,6 +800,7 @@ HRESULT Cheat::Renderer::PresentHook(IDXGISwapChain* swapChain, UINT syncInterva
 
                                 continue;
                             }
+                            
                             else if (cfg.visuals.sharks.bEnable && actor->isShark())
                             {
                                 FVector origin, extent;
@@ -866,6 +862,7 @@ HRESULT Cheat::Renderer::PresentHook(IDXGISwapChain* swapChain, UINT syncInterva
 
                                 continue;
                             }
+                            
                             else if (cfg.visuals.ships.bEnable)
                             {
                                 if (actor->isShip()) 
@@ -946,6 +943,7 @@ HRESULT Cheat::Renderer::PresentHook(IDXGISwapChain* swapChain, UINT syncInterva
                                     continue;
                                 }
                             }
+                            
                             if (cfg.visuals.puzzles.bEnable && actor->isPuzzleVault())
                             {
                                 auto vault = reinterpret_cast<APuzzleVault*>(actor);
@@ -1049,10 +1047,6 @@ HRESULT Cheat::Renderer::PresentHook(IDXGISwapChain* swapChain, UINT syncInterva
                     pos.Y += 15.f;
                     Drawing::RenderText(buf, pos, col);
 
-                    char buf1[0x30];
-                    int len1 = sprintf_s(buf1, "%d", cameraLoc.X);
-                    pos.Y += 15.f;
-                    Drawing::RenderText(buf1, pos, col);
                 }
             }
 
@@ -1167,10 +1161,11 @@ HRESULT Cheat::Renderer::PresentHook(IDXGISwapChain* swapChain, UINT syncInterva
                         auto crews = crewService->Crews;
                         if (crews.Data)
                         {
-                            ImGui::Columns(2, "CrewPlayers");
+                            ImGui::Columns(3, "CrewPlayers");
                             ImGui::Separator();
                             ImGui::Text("Name"); ImGui::NextColumn();
                             ImGui::Text("Activity"); ImGui::NextColumn();
+                            ImGui::Text("Distance"); ImGui::NextColumn();
                             ImGui::Separator();
                             for (uint32_t i = 0; i < crews.Count; i++)
                             {
@@ -1183,6 +1178,7 @@ HRESULT Cheat::Renderer::PresentHook(IDXGISwapChain* swapChain, UINT syncInterva
                                         auto& player = players[k];
                                         char buf[0x64];
                                         player->PlayerName.multi(buf, 0x50);
+                                        
                                         ImGui::Selectable(buf);
                                         if (ImGui::BeginPopupContextItem(buf))
                                         {
@@ -1192,16 +1188,18 @@ HRESULT Cheat::Renderer::PresentHook(IDXGISwapChain* swapChain, UINT syncInterva
                                         ImGui::NextColumn();
                                         const char* actions[] = { "None", "Bailing", "Cannon", "CannonEnd", "Capstan", "CapstanEnd", "CarryingBooty", "CarryingBootyEnd", "Dead", "DeadEnd", "Digging", "Dousing", "EmptyingBucket", "Harpoon", "Harpoon_END", "LoseHealth", "Repairing", "Sails", "Sails_END", "Wheel", "Wheel_END" };
                                         auto activity = (uint8_t)player->GetPlayerActivity();
-                                        if (activity < 21) { ImGui::Text(actions[activity]); }
+                                        if (activity < 21) { 
+                                            ImGui::Text(actions[activity]); 
+                                        }
                                       
+                                        ImGui::NextColumn();
+                                        const char* text = "text";
+                                        ImGui::Text(text);
                                         ImGui::NextColumn();
                                     }
                                     ImGui::Separator();
                                 }
 
-                                
-                                
-                                
                             }
                             ImGui::Columns();
                         }
@@ -1241,6 +1239,7 @@ HRESULT Cheat::Renderer::PresentHook(IDXGISwapChain* swapChain, UINT syncInterva
         ImGui::SetNextWindowSize(ImVec2(io.DisplaySize.x * 0.5f, io.DisplaySize.y * 0.7f), ImGuiCond_Once);
         ImGui::Begin("Menu", 0, ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_NoTitleBar);
         if (ImGui::BeginTabBar("Bars")) {
+            //Tab 1 "Visuals"
             if (ImGui::BeginTabItem("Visuals")) {
 
                 ImGui::Text("Global Visuals");
@@ -1249,7 +1248,6 @@ HRESULT Cheat::Renderer::PresentHook(IDXGISwapChain* swapChain, UINT syncInterva
                     ImGui::Checkbox("Enable", &cfg.visuals.bEnable);
                 }
                 ImGui::EndChild();
-
 
                 ImGui::Columns(2, "CLM1", false);
                 const char* boxes[] = { "None", "2DBox", "3DBox" };
@@ -1414,6 +1412,8 @@ HRESULT Cheat::Renderer::PresentHook(IDXGISwapChain* swapChain, UINT syncInterva
 
                 ImGui::EndTabItem();
             }
+            //Tab 2 "Aim"
+            /*
             if (ImGui::BeginTabItem("Aim")) {
 
                 ImGui::Text("Global Aim");
@@ -1480,7 +1480,7 @@ HRESULT Cheat::Renderer::PresentHook(IDXGISwapChain* swapChain, UINT syncInterva
                 }
                 ImGui::EndChild();
 
-                 */
+                 
 
                 ImGui::Columns();
 
@@ -1488,6 +1488,8 @@ HRESULT Cheat::Renderer::PresentHook(IDXGISwapChain* swapChain, UINT syncInterva
 
                 ImGui::EndTabItem();
             }
+            */
+            //Tab 3 "Misc"
             if (ImGui::BeginTabItem("Misc")) {
 
                 ImGui::Text("Global Misc");
