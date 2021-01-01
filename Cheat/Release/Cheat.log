@@ -30,9 +30,10 @@ C:\Users\ThePapaBear\Documents\GitHub\Poseidon\Cheat\cheat.cpp(958,84): warning 
 C:\Users\ThePapaBear\Documents\GitHub\Poseidon\Cheat\cheat.cpp(958,56): warning C4244: "Initialisierung": Konvertierung von "float" in "const int", möglicher Datenverlust
 C:\Users\ThePapaBear\Documents\GitHub\Poseidon\Cheat\cheat.cpp(991,77): warning C4244: "Initialisierung": Konvertierung von "float" in "int", möglicher Datenverlust
 C:\Users\ThePapaBear\Documents\GitHub\Poseidon\Cheat\cheat.cpp(991,48): warning C4244: "Initialisierung": Konvertierung von "float" in "const int", möglicher Datenverlust
-C:\Users\ThePapaBear\Documents\GitHub\Poseidon\Cheat\cheat.cpp(1038,31): warning C4244: "Initialisierung": Konvertierung von "float" in "int", möglicher Datenverlust
-C:\Users\ThePapaBear\Documents\GitHub\Poseidon\Cheat\cheat.cpp(1124,29): warning C4996: 'sprintf': This function or variable may be unsafe. Consider using sprintf_s instead. To disable deprecation, use _CRT_SECURE_NO_WARNINGS. See online help for details.
-C:\Users\ThePapaBear\Documents\GitHub\Poseidon\Cheat\cheat.cpp(1131,29): warning C4996: 'sprintf': This function or variable may be unsafe. Consider using sprintf_s instead. To disable deprecation, use _CRT_SECURE_NO_WARNINGS. See online help for details.
+C:\Users\ThePapaBear\Documents\GitHub\Poseidon\Cheat\cheat.cpp(1040,31): warning C4244: "Initialisierung": Konvertierung von "float" in "int", möglicher Datenverlust
+C:\Users\ThePapaBear\Documents\GitHub\Poseidon\Cheat\cheat.cpp(1053,48): warning C4477: "sprintf_s": Die Formatzeichenfolge "%d" erfordert ein Argument vom Typ "int", das variadic-Argument "1" weist aber den Typ "double" auf.
+C:\Users\ThePapaBear\Documents\GitHub\Poseidon\Cheat\cheat.cpp(1130,29): warning C4996: 'sprintf': This function or variable may be unsafe. Consider using sprintf_s instead. To disable deprecation, use _CRT_SECURE_NO_WARNINGS. See online help for details.
+C:\Users\ThePapaBear\Documents\GitHub\Poseidon\Cheat\cheat.cpp(1137,29): warning C4996: 'sprintf': This function or variable may be unsafe. Consider using sprintf_s instead. To disable deprecation, use _CRT_SECURE_NO_WARNINGS. See online help for details.
   main.cpp
 C:\Users\ThePapaBear\Documents\GitHub\Poseidon\Cheat\SDK.h(710,22): warning C4099: "AIslandService": Geben Sie den zuerst unter Verwendung von "struct" und jetzt unter Verwendung von "class" gesehenen Namen ein
 C:\Users\ThePapaBear\Documents\GitHub\Poseidon\Cheat\SDK.h(619): message : Siehe Deklaration von "AIslandService"

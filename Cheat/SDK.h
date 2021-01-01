@@ -1088,8 +1088,6 @@ struct ULevel {
 	TArray<ACharacter*> AActors;
 };
 
-
-
 struct UWorld {
 	static inline UWorld** GWorld = nullptr;
 	char pad[0x30]; // 0x0

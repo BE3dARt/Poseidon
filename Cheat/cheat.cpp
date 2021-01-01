@@ -1032,21 +1032,27 @@ HRESULT Cheat::Renderer::PresentHook(IDXGISwapChain* swapChain, UINT syncInterva
 
                 if (cfg.visuals.client.bCompass)
                 {
+
+                    //float dist = cameraLoc.DistTo(location);
                
                     const char* directions[] = { "N", "NE", "E", "SE", "S", "SW", "W", "NW" };
                     int yaw = ((int)cameraRot.Yaw + 450) % 360;
                     int index = int(yaw + 22.5f) % 360 * 0.0222222f;
 
-                
                     FVector2D pos = { io.DisplaySize.x * 0.5f, io.DisplaySize.y * 0.02f };
                     auto col = ImVec4(1.f, 1.f, 1.f, 1.f);
+                    
                     Drawing::RenderText(const_cast<char*>(directions[index]), pos, col);
+
                     char buf[0x30];
                     int len = sprintf_s(buf, "%d", yaw);
                     pos.Y += 15.f;
                     Drawing::RenderText(buf, pos, col);
-                
-                
+
+                    char buf1[0x30];
+                    int len1 = sprintf_s(buf1, "%d", cameraLoc.X);
+                    pos.Y += 15.f;
+                    Drawing::RenderText(buf1, pos, col);
                 }
             }
 

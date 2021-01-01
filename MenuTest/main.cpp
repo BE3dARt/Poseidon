@@ -1,4 +1,3 @@
-#define WIN32_LEAN_AND_MEAN  
 #define _CRT_SECURE_NO_WARNINGS
 #include <Windows.h>
 #include <comdef.h>
@@ -318,14 +317,13 @@ INT WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 		
 		ImU32 red = ImGui::GetColorU32(IM_COL32(255, 0, 0, 255));
 		ImU32 green = ImGui::GetColorU32(IM_COL32(0, 255, 0, 255));
-		ImU32 blue = ImGui::GetColorU32(IM_COL32(0, 100, 255, 255));
+		ImU32 blue = ImGui::GetColorU32(IM_COL32(255, 111, 27, 255));
 		ImU32 yellow = ImGui::GetColorU32(IM_COL32(255, 255, 0, 255));
 
 		char buf[250];
 		sprintf(buf, "FPS: %f", io.Framerate);
 		drawList->AddText({ 50.f, 50.f }, green, buf);
 
-		
 		if (TL.x < 0 || TL.y < 0 || TL.x > io.DisplaySize.x || TL.y > io.DisplaySize.y) time = 0.f;
 		TL = STL + RV * time;
 		drawList->AddCircleFilled(SLL, 3.f, green);
@@ -342,7 +340,8 @@ INT WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 			ImGui::SetNextWindowSize(ImVec2(io.DisplaySize.x * 0.5f, io.DisplaySize.y * 0.7f), ImGuiCond_Once);
 			ImGui::Begin("Menu", 0, ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_NoTitleBar);
 			if (ImGui::BeginTabBar("Bars")) {
-				if (ImGui::BeginTabItem("Visuals")) {
+				//Tab 1 "Visuals"
+				if (ImGui::BeginTabItem("Visualss")) {
 
 					ImGui::Text("Global Visuals");
 					if (ImGui::BeginChild("Global", ImVec2(0.f, 38.f), true, 0))
@@ -395,7 +394,7 @@ INT WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 
 					ImGui::Columns(2, "CLM2", false);
 
-					ImGui::Text("Ships");
+					ImGui::Text("LShips");
 					if (ImGui::BeginChild("ShipsSettings", ImVec2(0.f, 220.f), true, 0)) {
 
 						ImGui::Checkbox("Enable", &cfg.visuals.ships.bEnable);
@@ -511,6 +510,8 @@ INT WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 
 					ImGui::EndTabItem();
 				}
+				//Tab 2 "Aim"
+				/*
 				if (ImGui::BeginTabItem("Aim")) {
 
 					ImGui::Text("Global Aim");
@@ -555,6 +556,8 @@ INT WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 
 					ImGui::EndTabItem();
 				}
+				*/
+				//Tab 3 "Misc"
 				if (ImGui::BeginTabItem("Misc")) {
 
 					ImGui::Text("Global Misc");

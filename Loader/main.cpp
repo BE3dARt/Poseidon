@@ -9,6 +9,16 @@
 
 namespace fs = std::filesystem;
 
+//https://www.unknowncheats.me/forum/sea-of-thieves/
+
+////////////////////////////////////////////////////////////////////////////////////////////////
+// Return:
+// "process identifier" (PID) of "SoTGame.exe"
+// 
+// Function:
+// Takes a Snapshot of the specified processes, as well as the heaps, modules, and threads, 
+// analyise until "SoTGame.exe" is found.
+////////////////////////////////////////////////////////////////////////////////////////////////
 inline DWORD GetProcessIdByName(const char* name) {
     PVOID snapshot = CreateToolhelp32Snapshot(TH32CS_SNAPPROCESS, 0);
     PROCESSENTRY32 process;
@@ -41,6 +51,12 @@ inline bool HasModule(const DWORD pid, const char* modName)
     return status;
 }
 
+////////////////////////////////////////////////////////////////////////////////////////////////
+// Return:
+// If there is a library
+// filename of library
+// 
+////////////////////////////////////////////////////////////////////////////////////////////////
 inline bool GetFileExtFromDir(const fs::path& dir, const char* ext, fs::path& file)
 {
     for (const auto& entry : fs::directory_iterator(dir))
@@ -101,14 +117,31 @@ inline bool RemoteInject(const HANDLE& process, const std::wstring& mod)
 }
 
 int wmain(int argc, wchar_t* argv[]) {
-    const DWORD pid = GetProcessIdByName("SoTGame.exe");
-    if (!pid)
-    {
-        printf("Game process not found\n");
-        system("pause");
-        return 1;
-    }
+    DWORD pid = 0;
 
+    DWORD counter = 0;
+    printf("You have 60 seconds to start Sea of Thieves!\n");
+    while (true)
+    {
+        pid = GetProcessIdByName("SoTGame.exe");
+
+        if (!pid)
+        {
+            Sleep(1000);
+            counter += 1;
+
+            printf("Game process not found for %d seconds \n", counter);
+
+            if (counter > 60)
+            {
+                return 1;
+            }
+        }
+        else {
+            break;
+        }
+    }
+       
     const HANDLE process = OpenProcess(PROCESS_ALL_ACCESS, false, pid);
     if (process == INVALID_HANDLE_VALUE)
     {
