@@ -9,32 +9,32 @@ C:\Users\ThePapaBear\Documents\GitHub\Poseidon\Cheat\SDK.h(710,22): warning C409
 C:\Users\ThePapaBear\Documents\GitHub\Poseidon\Cheat\SDK.h(619): message : Siehe Deklaration von "AIslandService"
 C:\Users\ThePapaBear\Documents\GitHub\Poseidon\Cheat\SDK.h(725,22): warning C4099: "AKrakenService": Geben Sie den zuerst unter Verwendung von "struct" und jetzt unter Verwendung von "class" gesehenen Namen ein
 C:\Users\ThePapaBear\Documents\GitHub\Poseidon\Cheat\SDK.h(670): message : Siehe Deklaration von "AKrakenService"
-C:\Users\ThePapaBear\Documents\GitHub\Poseidon\Cheat\cheat.cpp(310,76): warning C4244: "Initialisierung": Konvertierung von "float" in "int", möglicher Datenverlust
-C:\Users\ThePapaBear\Documents\GitHub\Poseidon\Cheat\cheat.cpp(310,48): warning C4244: "Initialisierung": Konvertierung von "float" in "const int", möglicher Datenverlust
-C:\Users\ThePapaBear\Documents\GitHub\Poseidon\Cheat\cheat.cpp(328,76): warning C4244: "Initialisierung": Konvertierung von "float" in "int", möglicher Datenverlust
-C:\Users\ThePapaBear\Documents\GitHub\Poseidon\Cheat\cheat.cpp(328,48): warning C4244: "Initialisierung": Konvertierung von "float" in "const int", möglicher Datenverlust
-C:\Users\ThePapaBear\Documents\GitHub\Poseidon\Cheat\cheat.cpp(345,76): warning C4244: "Initialisierung": Konvertierung von "float" in "int", möglicher Datenverlust
-C:\Users\ThePapaBear\Documents\GitHub\Poseidon\Cheat\cheat.cpp(345,48): warning C4244: "Initialisierung": Konvertierung von "float" in "const int", möglicher Datenverlust
-C:\Users\ThePapaBear\Documents\GitHub\Poseidon\Cheat\cheat.cpp(413,74): warning C4244: "Initialisierung": Konvertierung von "float" in "int", möglicher Datenverlust
-C:\Users\ThePapaBear\Documents\GitHub\Poseidon\Cheat\cheat.cpp(413,48): warning C4244: "Initialisierung": Konvertierung von "float" in "const int", möglicher Datenverlust
-C:\Users\ThePapaBear\Documents\GitHub\Poseidon\Cheat\cheat.cpp(567,76): warning C4244: "Initialisierung": Konvertierung von "float" in "int", möglicher Datenverlust
-C:\Users\ThePapaBear\Documents\GitHub\Poseidon\Cheat\cheat.cpp(567,48): warning C4244: "Initialisierung": Konvertierung von "float" in "const int", möglicher Datenverlust
-C:\Users\ThePapaBear\Documents\GitHub\Poseidon\Cheat\cheat.cpp(665,78): warning C4244: "Initialisierung": Konvertierung von "float" in "int", möglicher Datenverlust
-C:\Users\ThePapaBear\Documents\GitHub\Poseidon\Cheat\cheat.cpp(665,52): warning C4244: "Initialisierung": Konvertierung von "float" in "const int", möglicher Datenverlust
-C:\Users\ThePapaBear\Documents\GitHub\Poseidon\Cheat\cheat.cpp(731,74): warning C4244: "Initialisierung": Konvertierung von "float" in "int", möglicher Datenverlust
-C:\Users\ThePapaBear\Documents\GitHub\Poseidon\Cheat\cheat.cpp(731,48): warning C4244: "Initialisierung": Konvertierung von "float" in "const int", möglicher Datenverlust
-C:\Users\ThePapaBear\Documents\GitHub\Poseidon\Cheat\cheat.cpp(747,76): warning C4244: "Initialisierung": Konvertierung von "float" in "int", möglicher Datenverlust
-C:\Users\ThePapaBear\Documents\GitHub\Poseidon\Cheat\cheat.cpp(747,48): warning C4244: "Initialisierung": Konvertierung von "float" in "const int", möglicher Datenverlust
-C:\Users\ThePapaBear\Documents\GitHub\Poseidon\Cheat\cheat.cpp(756,95): warning C4244: "=": Konvertierung von "float" in "int", möglicher Datenverlust
-C:\Users\ThePapaBear\Documents\GitHub\Poseidon\Cheat\cheat.cpp(809,76): warning C4244: "Initialisierung": Konvertierung von "float" in "int", möglicher Datenverlust
-C:\Users\ThePapaBear\Documents\GitHub\Poseidon\Cheat\cheat.cpp(809,48): warning C4244: "Initialisierung": Konvertierung von "float" in "const int", möglicher Datenverlust
-C:\Users\ThePapaBear\Documents\GitHub\Poseidon\Cheat\cheat.cpp(834,80): warning C4244: "Initialisierung": Konvertierung von "float" in "int", möglicher Datenverlust
-C:\Users\ThePapaBear\Documents\GitHub\Poseidon\Cheat\cheat.cpp(834,52): warning C4244: "Initialisierung": Konvertierung von "float" in "const int", möglicher Datenverlust
-C:\Users\ThePapaBear\Documents\GitHub\Poseidon\Cheat\cheat.cpp(865,73): warning C4244: "Initialisierung": Konvertierung von "float" in "int", möglicher Datenverlust
-C:\Users\ThePapaBear\Documents\GitHub\Poseidon\Cheat\cheat.cpp(865,44): warning C4244: "Initialisierung": Konvertierung von "float" in "const int", möglicher Datenverlust
-C:\Users\ThePapaBear\Documents\GitHub\Poseidon\Cheat\cheat.cpp(916,27): warning C4244: "Initialisierung": Konvertierung von "float" in "int", möglicher Datenverlust
-C:\Users\ThePapaBear\Documents\GitHub\Poseidon\Cheat\cheat.cpp(1002,29): warning C4996: 'sprintf': This function or variable may be unsafe. Consider using sprintf_s instead. To disable deprecation, use _CRT_SECURE_NO_WARNINGS. See online help for details.
-C:\Users\ThePapaBear\Documents\GitHub\Poseidon\Cheat\cheat.cpp(1009,29): warning C4996: 'sprintf': This function or variable may be unsafe. Consider using sprintf_s instead. To disable deprecation, use _CRT_SECURE_NO_WARNINGS. See online help for details.
+C:\Users\ThePapaBear\Documents\GitHub\Poseidon\Cheat\cheat.cpp(321,76): warning C4244: "Initialisierung": Konvertierung von "float" in "int", möglicher Datenverlust
+C:\Users\ThePapaBear\Documents\GitHub\Poseidon\Cheat\cheat.cpp(321,48): warning C4244: "Initialisierung": Konvertierung von "float" in "const int", möglicher Datenverlust
+C:\Users\ThePapaBear\Documents\GitHub\Poseidon\Cheat\cheat.cpp(339,76): warning C4244: "Initialisierung": Konvertierung von "float" in "int", möglicher Datenverlust
+C:\Users\ThePapaBear\Documents\GitHub\Poseidon\Cheat\cheat.cpp(339,48): warning C4244: "Initialisierung": Konvertierung von "float" in "const int", möglicher Datenverlust
+C:\Users\ThePapaBear\Documents\GitHub\Poseidon\Cheat\cheat.cpp(356,76): warning C4244: "Initialisierung": Konvertierung von "float" in "int", möglicher Datenverlust
+C:\Users\ThePapaBear\Documents\GitHub\Poseidon\Cheat\cheat.cpp(356,48): warning C4244: "Initialisierung": Konvertierung von "float" in "const int", möglicher Datenverlust
+C:\Users\ThePapaBear\Documents\GitHub\Poseidon\Cheat\cheat.cpp(424,74): warning C4244: "Initialisierung": Konvertierung von "float" in "int", möglicher Datenverlust
+C:\Users\ThePapaBear\Documents\GitHub\Poseidon\Cheat\cheat.cpp(424,48): warning C4244: "Initialisierung": Konvertierung von "float" in "const int", möglicher Datenverlust
+C:\Users\ThePapaBear\Documents\GitHub\Poseidon\Cheat\cheat.cpp(576,76): warning C4244: "Initialisierung": Konvertierung von "float" in "int", möglicher Datenverlust
+C:\Users\ThePapaBear\Documents\GitHub\Poseidon\Cheat\cheat.cpp(576,48): warning C4244: "Initialisierung": Konvertierung von "float" in "const int", möglicher Datenverlust
+C:\Users\ThePapaBear\Documents\GitHub\Poseidon\Cheat\cheat.cpp(669,74): warning C4244: "Initialisierung": Konvertierung von "float" in "int", möglicher Datenverlust
+C:\Users\ThePapaBear\Documents\GitHub\Poseidon\Cheat\cheat.cpp(669,48): warning C4244: "Initialisierung": Konvertierung von "float" in "const int", möglicher Datenverlust
+C:\Users\ThePapaBear\Documents\GitHub\Poseidon\Cheat\cheat.cpp(726,70): warning C4244: "Initialisierung": Konvertierung von "float" in "int", möglicher Datenverlust
+C:\Users\ThePapaBear\Documents\GitHub\Poseidon\Cheat\cheat.cpp(726,44): warning C4244: "Initialisierung": Konvertierung von "float" in "const int", möglicher Datenverlust
+C:\Users\ThePapaBear\Documents\GitHub\Poseidon\Cheat\cheat.cpp(739,72): warning C4244: "Initialisierung": Konvertierung von "float" in "int", möglicher Datenverlust
+C:\Users\ThePapaBear\Documents\GitHub\Poseidon\Cheat\cheat.cpp(739,44): warning C4244: "Initialisierung": Konvertierung von "float" in "const int", möglicher Datenverlust
+C:\Users\ThePapaBear\Documents\GitHub\Poseidon\Cheat\cheat.cpp(747,91): warning C4244: "=": Konvertierung von "float" in "int", möglicher Datenverlust
+C:\Users\ThePapaBear\Documents\GitHub\Poseidon\Cheat\cheat.cpp(802,72): warning C4244: "Initialisierung": Konvertierung von "float" in "int", möglicher Datenverlust
+C:\Users\ThePapaBear\Documents\GitHub\Poseidon\Cheat\cheat.cpp(802,44): warning C4244: "Initialisierung": Konvertierung von "float" in "const int", möglicher Datenverlust
+C:\Users\ThePapaBear\Documents\GitHub\Poseidon\Cheat\cheat.cpp(826,76): warning C4244: "Initialisierung": Konvertierung von "float" in "int", möglicher Datenverlust
+C:\Users\ThePapaBear\Documents\GitHub\Poseidon\Cheat\cheat.cpp(826,48): warning C4244: "Initialisierung": Konvertierung von "float" in "const int", möglicher Datenverlust
+C:\Users\ThePapaBear\Documents\GitHub\Poseidon\Cheat\cheat.cpp(855,69): warning C4244: "Initialisierung": Konvertierung von "float" in "int", möglicher Datenverlust
+C:\Users\ThePapaBear\Documents\GitHub\Poseidon\Cheat\cheat.cpp(855,40): warning C4244: "Initialisierung": Konvertierung von "float" in "const int", möglicher Datenverlust
+C:\Users\ThePapaBear\Documents\GitHub\Poseidon\Cheat\cheat.cpp(903,27): warning C4244: "Initialisierung": Konvertierung von "float" in "int", möglicher Datenverlust
+C:\Users\ThePapaBear\Documents\GitHub\Poseidon\Cheat\cheat.cpp(989,29): warning C4996: 'sprintf': This function or variable may be unsafe. Consider using sprintf_s instead. To disable deprecation, use _CRT_SECURE_NO_WARNINGS. See online help for details.
+C:\Users\ThePapaBear\Documents\GitHub\Poseidon\Cheat\cheat.cpp(996,29): warning C4996: 'sprintf': This function or variable may be unsafe. Consider using sprintf_s instead. To disable deprecation, use _CRT_SECURE_NO_WARNINGS. See online help for details.
   main.cpp
 C:\Users\ThePapaBear\Documents\GitHub\Poseidon\Cheat\SDK.h(710,22): warning C4099: "AIslandService": Geben Sie den zuerst unter Verwendung von "struct" und jetzt unter Verwendung von "class" gesehenen Namen ein
 C:\Users\ThePapaBear\Documents\GitHub\Poseidon\Cheat\SDK.h(619): message : Siehe Deklaration von "AIslandService"
