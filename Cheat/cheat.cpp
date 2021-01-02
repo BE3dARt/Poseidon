@@ -626,19 +626,40 @@ HRESULT Cheat::Renderer::PresentHook(IDXGISwapChain* swapChain, UINT syncInterva
                         //Versuchskaninchen
                         else if (cfg.visuals.animals.bEnable && actor->isAnimal())
                         {
+
+                            float velocity = 60.5f;
+
                             FVector origin, extent;
                             actor->GetActorBounds(true, origin, extent);
 
                             FVector2D headPos;
-                            if (!localController->ProjectWorldLocationToScreen({ origin.X, origin.Y, ((origin.Z + extent.Z)+200) }, headPos)) continue;
+                            if (!localController->ProjectWorldLocationToScreen({ origin.X, origin.Y, origin.Z + extent.Z }, headPos)) continue;
                             FVector2D footPos;
-                            if (!localController->ProjectWorldLocationToScreen({ origin.X, origin.Y, ((origin.Z + extent.Z) + 200) }, footPos)) continue;
+                            if (!localController->ProjectWorldLocationToScreen({ origin.X, origin.Y, origin.Z + extent.Z }, footPos)) continue;
 
                             float height = abs(footPos.Y - headPos.Y);
                             float width = height * 0.6f;
 
                             bool bVisible = localController->LineOfSightTo(actor, cameraLoc, false);
                             ImVec4 col = bVisible ? cfg.visuals.animals.colorVis : cfg.visuals.animals.colorInv;
+
+                            auto displayName = reinterpret_cast<AFauna*>(actor)->DisplayName;
+
+                            const int dist = localLoc.DistTo(origin) * 0.01f;
+                            char name[0x64];
+                            const int len = displayName->multi(name, 0x50);
+                            snprintf(name + len, sizeof(name) - len, " [%d]", dist);
+                            const float adjust = height * 0.05f;
+                            FVector2D pos = { headPos.X, headPos.Y - adjust };
+                            Drawing::RenderText(name, pos, cfg.visuals.animals.textCol);
+
+                            float angle = ((asin(((float)dist * 9.81f) / (60.5f * 60.5f))) * (float)180.f / 3.141592653589f) / 2;
+                            float deltaZ = (float)dist * (sin((angle * 3.141592653589f / (float)180.f))) * 100;
+
+                            FVector2D headPosALT;
+                            if (!localController->ProjectWorldLocationToScreen({ origin.X, origin.Y, ((origin.Z + extent.Z) + deltaZ) }, headPos)) continue;
+                            FVector2D footPosALT;
+                            if (!localController->ProjectWorldLocationToScreen({ origin.X, origin.Y, ((origin.Z + extent.Z) + deltaZ) }, footPos)) continue;
 
                             switch (cfg.visuals.animals.boxType)
                             {
@@ -664,6 +685,7 @@ HRESULT Cheat::Renderer::PresentHook(IDXGISwapChain* swapChain, UINT syncInterva
                                  */
                             }
 
+                            /*
                             auto displayName = reinterpret_cast<AFauna*>(actor)->DisplayName;
                             if (displayName) {
                                 const int dist = localLoc.DistTo(origin) * 0.01f;
@@ -674,6 +696,7 @@ HRESULT Cheat::Renderer::PresentHook(IDXGISwapChain* swapChain, UINT syncInterva
                                 FVector2D pos = { headPos.X, headPos.Y - adjust };
                                 Drawing::RenderText(name, pos, cfg.visuals.animals.textCol);
                             }
+                            */
 
                             continue;
                         }
