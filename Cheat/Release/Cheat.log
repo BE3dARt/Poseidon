@@ -47,6 +47,6 @@ C:\Users\ThePapaBear\Documents\GitHub\Poseidon\Cheat\SDK.h(725,22): warning C409
 C:\Users\ThePapaBear\Documents\GitHub\Poseidon\Cheat\SDK.h(670): message : Siehe Deklaration von "AKrakenService"
   Code wird generiert.
   Previous IPDB not found, fall back to full compilation.
-  All 1779 functions were compiled because no usable IPDB/IOBJ from previous compilation was found.
+  All 1788 functions were compiled because no usable IPDB/IOBJ from previous compilation was found.
   Codegenerierung ist abgeschlossen.
   Cheat.vcxproj -> C:\Users\ThePapaBear\Documents\GitHub\Poseidon\bin\Release\Cheat.dll

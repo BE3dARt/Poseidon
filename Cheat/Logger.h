@@ -6,8 +6,9 @@
 #include <imgui/imgui_impl_win32.h>
 #include <HookLib/HookLib.h>
 
-namespace fs = std::filesystem;
+#define STEAM 1
 
+namespace fs = std::filesystem;
 
 inline bool Cheat::Logger::Init()
 {
