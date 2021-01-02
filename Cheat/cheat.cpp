@@ -270,652 +270,663 @@ HRESULT Cheat::Renderer::PresentHook(IDXGISwapChain* swapChain, UINT syncInterva
                         }
                         
                     }
-                    if (cfg.visuals.bEnable)
+                    
+                    
+                    if (cfg.visuals.client.bDebug)
                     {
-                        if (cfg.visuals.client.bDebug)
+                        const FVector location = actor->K2_GetActorLocation();
+                        const float dist = localLoc.DistTo(location) * 0.01f;
+                        if (dist < cfg.visuals.client.fDebug)
                         {
-                            const FVector location = actor->K2_GetActorLocation();
-                            const float dist = localLoc.DistTo(location) * 0.01f;
-                            if (dist < cfg.visuals.client.fDebug)
+                            auto const actorClass = actor->Class;
+                            if (!actorClass) continue;
+                            auto super = actorClass->SuperField;
+                            if (!super) continue;
+                            FVector2D screen;
+                            if (localController->ProjectWorldLocationToScreen(location, screen))
                             {
-                                auto const actorClass = actor->Class;
-                                if (!actorClass) continue;
-                                auto super = actorClass->SuperField;
-                                if (!super) continue;
-                                FVector2D screen;
-                                if (localController->ProjectWorldLocationToScreen(location, screen))
+                                auto superName = super->GetNameFast();
+                                auto className = actorClass->GetNameFast();
+                                if (superName && className)
                                 {
-                                    auto superName = super->GetNameFast();
-                                    auto className = actorClass->GetNameFast();
-                                    if (superName && className)
-                                    {
-                                        char buf[0x128];
-                                        sprintf_s(buf, "%s %s [%d] (%p)", className, superName, (int)dist, actor);
-                                        Drawing::RenderText(buf, screen, ImVec4(1.f, 1.f, 1.f, 1.f));
-                                    }
+                                    char buf[0x128];
+                                    sprintf_s(buf, "%s %s [%d] (%p)", className, superName, (int)dist, actor);
+                                    Drawing::RenderText(buf, screen, ImVec4(1.f, 1.f, 1.f, 1.f));
                                 }
                             }
                         }
-                        else {
+                    }
+                    else {
 
-                            //Items
-                            if (cfg.visuals.items.bEnable && actor->isItem()) {
+                        //Items
+                        if (cfg.visuals.items.bEnable && actor->isItem()) {
 
-                                if (cfg.visuals.items.bName)
+                            auto location = actor->K2_GetActorLocation();
+                            FVector2D screen;
+                            if (localController->ProjectWorldLocationToScreen(location, screen))
+                            {
+                                auto const desc = actor->GetItemInfo()->Desc;
+                                if (!desc) continue;
+                                const int dist = localLoc.DistTo(location) * 0.01f;
+                                distanceArray[0] = dist;
+                                char name[0x64];
+                                const int len = desc->Title->multi(name, 0x50);
+                                snprintf(name + len, sizeof(name) - len, " [%d]", dist);
+                                Drawing::RenderText(name, screen, cfg.visuals.items.textCol);
+                            };
+
+                            continue;
+                        }
+
+                        //Barrels
+                        if (cfg.visuals.barrels.bEnable && actor->isBarrel()) {
+
+                            auto location = actor->K2_GetActorLocation();
+                            FVector2D screen;
+                            if (localController->ProjectWorldLocationToScreen(location, screen))
+                            {
+                                const int dist = localLoc.DistTo(location) * 0.01f;
+                                char name[0x64];
+                                sprintf_s(name, "Barrel [%d]", dist);
+
+                                Drawing::RenderText(name, screen, cfg.visuals.items.textCol);
+                            };
+
+                            continue;
+                        }
+
+                        //Shipwrecks
+                        else if (cfg.visuals.shipwrecks.bEnable && actor->isShipwreck())
+                        {
+                            auto location = actor->K2_GetActorLocation();
+                            FVector2D screen;
+                            if (localController->ProjectWorldLocationToScreen(location, screen))
+                            {
+                                const int dist = localLoc.DistTo(location) * 0.01f;
+                                char name[0x64];
+                                sprintf_s(name, "Shipwreck [%d]", dist);
+                                Drawing::RenderText(name, screen, cfg.visuals.items.textCol);
+                            };
+                            continue;
+                        }
+
+                        //Other Players
+                        else if (cfg.visuals.players.bEnable && actor->isPlayer() && actor != localCharacter && !actor->IsDead())
+                        {
+
+                            const bool teammate = UCrewFunctions::AreCharactersInSameCrew(actor, localCharacter);
+                            if (teammate && !cfg.visuals.players.bDrawTeam) continue;
+
+                            FVector origin, extent;
+                            actor->GetActorBounds(true, origin, extent);
+                            const FVector location = actor->K2_GetActorLocation();
+
+                            FVector2D headPos;
+                            if (!localController->ProjectWorldLocationToScreen({ location.X, location.Y, location.Z + extent.Z }, headPos)) continue;
+                            FVector2D footPos;
+                            if (!localController->ProjectWorldLocationToScreen({ location.X, location.Y, location.Z - extent.Z }, footPos)) continue;
+
+                            const float height = abs(footPos.Y - headPos.Y);
+                            const float width = height * 0.4f;
+
+                            const bool bVisible = localController->LineOfSightTo(actor, cameraLoc, false);
+                            ImVec4 col;
+                            if (teammate) col = bVisible ? cfg.visuals.players.teamColorVis : cfg.visuals.players.teamColorInv;
+                            else  col = bVisible ? cfg.visuals.players.enemyColorVis : cfg.visuals.players.enemyColorInv;
+
+                            switch (cfg.visuals.players.boxType)
+                            {
+                            case Config::EBox::E2DBoxes:
+                            {
+                                Drawing::Render2DBox(headPos, footPos, height, width, col);
+                                break;
+                            }
+                            case Config::EBox::E3DBoxes:
+                            {
+                                FRotator rotation = actor->K2_GetActorRotation();
+                                FVector ext = { 35.f, 35.f, extent.Z };
+                                if (!Drawing::Render3DBox(localController, location, ext, rotation, col)) continue;
+                                break;
+                            }
+                            /*
+                            case Config::EBox::EDebugBoxes:
+                            {
+                                FVector ext = { 35.f, 35.f, extent.Z };
+                                UKismetMathLibrary::DrawDebugBox(actor, location, ext, *reinterpret_cast<FLinearColor*>(&col), actor->K2_GetActorRotation(), 0.0f);
+                                break;
+                            }
+                            */
+                            }
+
+
+                            if (cfg.visuals.players.bName)
+                            {
+
+                                auto const playerState = actor->PlayerState;
+                                if (!playerState) continue;
+
+                                const auto playerName = playerState->PlayerName;
+                                if (!playerName.Data) continue;
+
+                                char name[0x30];
+                                const int len = playerName.multi(name, 0x20);
+                                const int dist = localLoc.DistTo(origin) * 0.01f;
+
+                                //distanceArray[(l-1)] = dist;
+                                //distanceArray[0] = dist;
+                                snprintf(name + len, sizeof(name) - len, " [%d]", dist);
+
+                                const float adjust = height * 0.05f;
+                                FVector2D pos = { headPos.X, headPos.Y - adjust };
+                                Drawing::RenderText(name, pos, cfg.visuals.players.textCol);
+                            }
+
+                            if (cfg.visuals.players.barType != Config::EBar::ENone)
+                            {
+                                auto const healthComp = actor->HealthComponent;
+                                if (!healthComp) continue;
+                                const float hp = healthComp->GetCurrentHealth() / healthComp->GetMaxHealth();
+                                const float width2 = width * 0.5f;
+                                const float adjust = height * 0.025f;
+                                switch (cfg.visuals.players.barType)
                                 {
-                                    auto location = actor->K2_GetActorLocation();
-                                    FVector2D screen;
-                                    if (localController->ProjectWorldLocationToScreen(location, screen))
+                                case Config::EBar::ELeft:
+                                {
+                                    const float len = height * hp;
+                                    drawList->AddRectFilled({ headPos.X - width2 - adjust * 2.f, headPos.Y }, { headPos.X - width2 - adjust, footPos.Y - len }, ImGui::GetColorU32(IM_COL32(255, 0, 0, 255)));
+                                    drawList->AddRectFilled({ headPos.X - width2 - adjust * 2.f, footPos.Y - len }, { headPos.X - width2 - adjust, footPos.Y }, ImGui::GetColorU32(IM_COL32(0, 255, 0, 255)));
+                                    break;
+                                }
+                                case Config::EBar::ERight:
+                                {
+                                    const float len = height * hp;
+                                    drawList->AddRectFilled({ headPos.X + width2 + adjust, headPos.Y }, { headPos.X + width2 + adjust * 2.f, footPos.Y - len }, ImGui::GetColorU32(IM_COL32(255, 0, 0, 255)));
+                                    drawList->AddRectFilled({ headPos.X + width2 + adjust, footPos.Y - len }, { headPos.X + width2 + adjust * 2.f, footPos.Y }, ImGui::GetColorU32(IM_COL32(0, 255, 0, 255)));
+                                    break;
+                                }
+                                case Config::EBar::EBottom:
+                                {
+                                    const float len = width * hp;
+                                    drawList->AddRectFilled({ headPos.X - width2, footPos.Y + adjust }, { headPos.X - width2 + len, footPos.Y + adjust * 2.f }, ImGui::GetColorU32(IM_COL32(0, 255, 0, 255)));
+                                    drawList->AddRectFilled({ headPos.X - width2 + len, footPos.Y + adjust }, { headPos.X + width2, footPos.Y + adjust * 2.f }, ImGui::GetColorU32(IM_COL32(255, 0, 0, 255)));
+                                    break;
+                                }
+                                case Config::EBar::ETop:
+                                {
+                                    const float len = width * hp;
+                                    drawList->AddRectFilled({ headPos.X - width2, headPos.Y - adjust * 2.f }, { headPos.X - width2 + len, headPos.Y - adjust }, ImGui::GetColorU32(IM_COL32(0, 255, 0, 255)));
+                                    drawList->AddRectFilled({ headPos.X - width2 + len, headPos.Y - adjust * 2.f }, { headPos.X + width2, headPos.Y - adjust }, ImGui::GetColorU32(IM_COL32(255, 0, 0, 255)));
+                                    break;
+                                }
+                                }
+
+                            }
+
+                            if (cfg.visuals.players.bSkeleton)
+                            {
+                                auto const mesh = actor->Mesh;
+                                if (!actor->Mesh) continue;
+
+
+                                const BYTE bodyHead[] = { 4, 5, 6, 51, 7, 6, 80, 7, 8, 9 };
+                                const BYTE neckHandR[] = { 80, 81, 82, 83, 84 };
+                                const BYTE neckHandL[] = { 51, 52, 53, 54, 55 };
+                                const BYTE bodyFootR[] = { 4, 111, 112, 113, 114 };
+                                const BYTE bodyFootL[] = { 4, 106, 107, 108, 109 };
+
+                                const std::pair<const BYTE*, const BYTE> skeleton[] = { {bodyHead, 10}, {neckHandR, 5}, {neckHandL, 5}, {bodyFootR, 5}, {bodyFootL, 5} };
+
+
+
+                                const FMatrix comp2world = mesh->K2_GetComponentToWorld().ToMatrixWithScale();
+
+                                if (!Drawing::RenderSkeleton(localController, mesh, comp2world, skeleton, 5, col)) continue;
+
+
+                            }
+
+                            continue;
+
+                        }
+
+                        //Skeletons
+                        else if (cfg.visuals.skeletons.bEnable && actor->isSkeleton() && !actor->IsDead()) {
+                            // todo: make a function to draw both skeletons and players as they are similar
+                            FVector origin, extent;
+                            actor->GetActorBounds(true, origin, extent);
+
+                            const FVector location = actor->K2_GetActorLocation();
+                            FVector2D headPos;
+                            if (!localController->ProjectWorldLocationToScreen({ location.X, location.Y, location.Z + extent.Z }, headPos)) continue;
+                            FVector2D footPos;
+                            if (!localController->ProjectWorldLocationToScreen({ location.X, location.Y, location.Z - extent.Z }, footPos)) continue;
+
+                            const float height = abs(footPos.Y - headPos.Y);
+                            const float width = height * 0.4f;
+
+                            const bool bVisible = localController->LineOfSightTo(actor, cameraLoc, false);
+                            const ImVec4 col = bVisible ? cfg.visuals.skeletons.colorVis : cfg.visuals.skeletons.colorInv;
+
+                            if (cfg.visuals.skeletons.bSkeleton)
+                            {
+                                auto const mesh = actor->Mesh;
+                                if (!actor->Mesh) continue;
+
+                                const BYTE bodyHead[] = { 4, 5, 6, 7, 8, 9 };
+                                const BYTE neckHandR[] = { 7, 41, 42, 43 };
+                                const BYTE neckHandL[] = { 7, 12, 13, 14 };
+                                const BYTE bodyFootR[] = { 4, 71, 72, 73, 74 };
+                                const BYTE bodyFootL[] = { 4, 66, 67, 68, 69 };
+
+                                const std::pair<const BYTE*, const BYTE> skeleton[] = { {bodyHead, 6}, {neckHandR, 4}, {neckHandL, 4}, {bodyFootR, 5}, {bodyFootL, 5} };
+
+                                const FMatrix comp2world = mesh->K2_GetComponentToWorld().ToMatrixWithScale();
+
+                                /*for (auto i = 0; i < 122; i++)
+                                {
+                                    FVector pos;
+                                    if (mesh->GetBone(i, comp2world, pos))
                                     {
-                                        auto const desc = actor->GetItemInfo()->Desc;
-                                        if (!desc) continue;
-                                        const int dist = localLoc.DistTo(location) * 0.01f;
-                                        distanceArray[0] = dist;
-                                        char name[0x64];
-                                        const int len = desc->Title->multi(name, 0x50);
-                                        snprintf(name + len, sizeof(name) - len, " [%d]", dist);
-                                        Drawing::RenderText(name, screen, cfg.visuals.items.textCol);
+                                        FVector2D screen;
+                                        if (!localController->ProjectWorldLocationToScreen(pos, screen)) continue;
+                                        char text[0x30];
+                                        auto len = sprintf_s(text, "%d", i);
+                                        Drawing::RenderText(text, screen, ImVec4(1.f, 1.f, 1.f, 1.f));
                                     };
-                                }
+                                }*/
 
-                                continue;
+                                if (!Drawing::RenderSkeleton(localController, mesh, comp2world, skeleton, 5, col)) continue;
+
+
                             }
 
-                            //Barrels
-
-                            //Shipwrecks
-                            else if (cfg.visuals.shipwrecks.bEnable && actor->isShipwreck())
+                            switch (cfg.visuals.skeletons.boxType)
                             {
-                                auto location = actor->K2_GetActorLocation();
-                                FVector2D screen;
-                                if (localController->ProjectWorldLocationToScreen(location, screen))
-                                {
-                                    const int dist = localLoc.DistTo(location) * 0.01f;
-                                    char name[0x64];
-                                    sprintf_s(name, "Shipwreck [%d]", dist);
-                                    Drawing::RenderText(name, screen, cfg.visuals.items.textCol);
-                                };
-                                continue;
+                            case Config::EBox::E2DBoxes:
+                            {
+                                Drawing::Render2DBox(headPos, footPos, height, width, col);
+                                break;
+                            }
+                            case Config::EBox::E3DBoxes:
+                            {
+                                FRotator rotation = actor->K2_GetActorRotation();
+                                if (!Drawing::Render3DBox(localController, origin, extent, rotation, col)) continue;
+                                break;
+                            }
+                            /*
+                            case Config::EBox::EDebugBoxes:
+                            {
+                                UKismetMathLibrary::DrawDebugBox(actor, origin, extent, *reinterpret_cast<const FLinearColor*>(&col), actor->K2_GetActorRotation(), 0.0f);
+                                break;
+                            }
+                            */
                             }
 
-                            //Other Players
-                            else if (cfg.visuals.players.bEnable && actor->isPlayer()  && actor != localCharacter && !actor->IsDead())
+                            if (cfg.visuals.skeletons.bName)
+                            {
+                                const int dist = localLoc.DistTo(location) * 0.01f;
+                                char name[0x64];
+                                sprintf_s(name, "Skeleton [%d]", dist);
+                                Drawing::RenderText(name, headPos, cfg.visuals.skeletons.textCol);
+                            }
+
+                            if (cfg.visuals.skeletons.barType != Config::EBar::ENone)
+                            {
+                                auto const healthComp = actor->HealthComponent;
+                                if (!healthComp) continue;
+                                const float hp = healthComp->GetCurrentHealth() / healthComp->GetMaxHealth();
+                                const float width2 = width * 0.5f;
+                                const float adjust = height * 0.025f;
+
+                                switch (cfg.visuals.skeletons.barType)
+                                {
+                                case Config::EBar::ELeft:
+                                {
+                                    const float len = height * hp;
+                                    drawList->AddRectFilled({ headPos.X - width2 - adjust * 2.f, headPos.Y }, { headPos.X - width2 - adjust, footPos.Y - len }, ImGui::GetColorU32(IM_COL32(255, 0, 0, 255)));
+                                    drawList->AddRectFilled({ headPos.X - width2 - adjust * 2.f, footPos.Y - len }, { headPos.X - width2 - adjust, footPos.Y }, ImGui::GetColorU32(IM_COL32(0, 255, 0, 255)));
+                                    break;
+                                }
+                                case Config::EBar::ERight:
+                                {
+                                    const float len = height * hp;
+                                    drawList->AddRectFilled({ headPos.X + width2 + adjust, headPos.Y }, { headPos.X + width2 + adjust * 2.f, footPos.Y - len }, ImGui::GetColorU32(IM_COL32(255, 0, 0, 255)));
+                                    drawList->AddRectFilled({ headPos.X + width2 + adjust, footPos.Y - len }, { headPos.X + width2 + adjust * 2.f, footPos.Y }, ImGui::GetColorU32(IM_COL32(0, 255, 0, 255)));
+                                    break;
+                                }
+                                case Config::EBar::EBottom:
+                                {
+                                    const float len = width * hp;
+                                    drawList->AddRectFilled({ headPos.X - width2, footPos.Y + adjust }, { headPos.X - width2 + len, footPos.Y + adjust * 2.f }, ImGui::GetColorU32(IM_COL32(0, 255, 0, 255)));
+                                    drawList->AddRectFilled({ headPos.X - width2 + len, footPos.Y + adjust }, { headPos.X + width2, footPos.Y + adjust * 2.f }, ImGui::GetColorU32(IM_COL32(255, 0, 0, 255)));
+                                    break;
+                                }
+                                case Config::EBar::ETop:
+                                {
+                                    const float len = width * hp;
+                                    drawList->AddRectFilled({ headPos.X - width2, headPos.Y - adjust * 2.f }, { headPos.X - width2 + len, headPos.Y - adjust }, ImGui::GetColorU32(IM_COL32(0, 255, 0, 255)));
+                                    drawList->AddRectFilled({ headPos.X - width2 + len, headPos.Y - adjust * 2.f }, { headPos.X + width2, headPos.Y - adjust }, ImGui::GetColorU32(IM_COL32(255, 0, 0, 255)));
+                                    break;
+                                }
+                                }
+
+                            }
+
+
+                            continue;
+                        }
+
+                        //Animals
+                        else if (cfg.visuals.animals.bEnable && actor->isAnimal())
+                        {
+                            FVector origin, extent;
+                            actor->GetActorBounds(true, origin, extent);
+
+                            FVector2D headPos;
+                            if (!localController->ProjectWorldLocationToScreen({ origin.X, origin.Y, origin.Z + extent.Z }, headPos)) continue;
+                            FVector2D footPos;
+                            if (!localController->ProjectWorldLocationToScreen({ origin.X, origin.Y, origin.Z - extent.Z }, footPos)) continue;
+
+                            float height = abs(footPos.Y - headPos.Y);
+                            float width = height * 0.6f;
+
+                            bool bVisible = localController->LineOfSightTo(actor, cameraLoc, false);
+                            ImVec4 col = bVisible ? cfg.visuals.animals.colorVis : cfg.visuals.animals.colorInv;
+
+                            switch (cfg.visuals.animals.boxType)
+                            {
+                            case Config::EBox::E2DBoxes:
+                            {
+                                Drawing::Render2DBox(headPos, footPos, height, width, col);
+                                break;
+                            }
+                            case Config::EBox::E3DBoxes:
+                            {
+                                FRotator rotation = actor->K2_GetActorRotation();
+                                FVector ext = { 40.f, 40.f, extent.Z };
+                                if (!Drawing::Render3DBox(localController, origin, ext, rotation, col)) continue;
+                                break;
+                            }
+                            /*
+                            case Config::EBox::EDebugBoxes:
+                            {
+                                FVector ext = { 40.f, 40.f, extent.Z };
+                                UKismetMathLibrary::DrawDebugBox(actor, origin, ext, *reinterpret_cast<const FLinearColor*>(&col), actor->K2_GetActorRotation(), 0.0f);
+                                break;
+                            }
+                             */
+                            }
+
+                            if (cfg.visuals.animals.bName)
                             {
 
-                                const bool teammate = UCrewFunctions::AreCharactersInSameCrew(actor, localCharacter);
-                                if (teammate && !cfg.visuals.players.bDrawTeam) continue;
-
-                                FVector origin, extent;
-                                actor->GetActorBounds(true, origin, extent);
-                                const FVector location = actor->K2_GetActorLocation();
-
-                                FVector2D headPos;
-                                if (!localController->ProjectWorldLocationToScreen({ location.X, location.Y, location.Z + extent.Z }, headPos)) continue;
-                                FVector2D footPos;
-                                if (!localController->ProjectWorldLocationToScreen({ location.X, location.Y, location.Z - extent.Z }, footPos)) continue;
-
-                                const float height = abs(footPos.Y - headPos.Y);
-                                const float width = height * 0.4f;
-
-                                const bool bVisible = localController->LineOfSightTo(actor, cameraLoc, false);
-                                ImVec4 col;
-                                if (teammate) col = bVisible ? cfg.visuals.players.teamColorVis : cfg.visuals.players.teamColorInv;
-                                else  col = bVisible ? cfg.visuals.players.enemyColorVis : cfg.visuals.players.enemyColorInv;
-                               
-                                switch (cfg.visuals.players.boxType)
-                                {
-                                case Config::EBox::E2DBoxes: 
-                                {
-                                    Drawing::Render2DBox(headPos, footPos, height, width, col);
-                                    break;
-                                }
-                                case Config::EBox::E3DBoxes: 
-                                {
-                                    FRotator rotation = actor->K2_GetActorRotation();
-                                    FVector ext = { 35.f, 35.f, extent.Z };
-                                    if (!Drawing::Render3DBox(localController, location, ext, rotation, col)) continue;
-                                    break;
-                                }
-                                /*
-                                case Config::EBox::EDebugBoxes: 
-                                {
-                                    FVector ext = { 35.f, 35.f, extent.Z };
-                                    UKismetMathLibrary::DrawDebugBox(actor, location, ext, *reinterpret_cast<FLinearColor*>(&col), actor->K2_GetActorRotation(), 0.0f);
-                                    break;
-                                }
-                                */
-                                }
-
-
-                                if (cfg.visuals.players.bName)
-                                {
-
-                                    auto const playerState = actor->PlayerState;
-                                    if (!playerState) continue;
-
-                                    const auto playerName = playerState->PlayerName;
-                                    if (!playerName.Data) continue;
-
-                                    char name[0x30];
-                                    const int len = playerName.multi(name, 0x20);
+                                auto displayName = reinterpret_cast<AFauna*>(actor)->DisplayName;
+                                if (displayName) {
                                     const int dist = localLoc.DistTo(origin) * 0.01f;
-
-                                    //distanceArray[(l-1)] = dist;
-                                    //distanceArray[0] = dist;
+                                    char name[0x64];
+                                    const int len = displayName->multi(name, 0x50);
                                     snprintf(name + len, sizeof(name) - len, " [%d]", dist);
-
                                     const float adjust = height * 0.05f;
                                     FVector2D pos = { headPos.X, headPos.Y - adjust };
-                                    Drawing::RenderText(name, pos, cfg.visuals.players.textCol);
+                                    Drawing::RenderText(name, pos, cfg.visuals.animals.textCol);
                                 }
-
-                                if (cfg.visuals.players.barType != Config::EBar::ENone)
-                                {
-                                    auto const healthComp = actor->HealthComponent;
-                                    if (!healthComp) continue;
-                                    const float hp = healthComp->GetCurrentHealth() / healthComp->GetMaxHealth();
-                                    const float width2 = width * 0.5f;
-                                    const float adjust = height * 0.025f;
-                                    switch (cfg.visuals.players.barType)
-                                    {
-                                    case Config::EBar::ELeft: 
-                                    {
-                                        const float len = height * hp;
-                                        drawList->AddRectFilled({ headPos.X - width2 - adjust * 2.f, headPos.Y }, { headPos.X - width2 - adjust, footPos.Y - len }, ImGui::GetColorU32(IM_COL32(255, 0, 0, 255)));
-                                        drawList->AddRectFilled({ headPos.X - width2 - adjust * 2.f, footPos.Y - len }, { headPos.X - width2 - adjust, footPos.Y }, ImGui::GetColorU32(IM_COL32(0, 255, 0, 255)));
-                                        break;
-                                    }
-                                    case Config::EBar::ERight:
-                                    {
-                                        const float len = height * hp;
-                                        drawList->AddRectFilled({ headPos.X + width2 + adjust, headPos.Y }, { headPos.X + width2 + adjust * 2.f, footPos.Y - len }, ImGui::GetColorU32(IM_COL32(255, 0, 0, 255)));
-                                        drawList->AddRectFilled({ headPos.X + width2 + adjust, footPos.Y - len }, { headPos.X + width2 + adjust * 2.f, footPos.Y }, ImGui::GetColorU32(IM_COL32(0, 255, 0, 255)));
-                                        break;
-                                    }
-                                    case Config::EBar::EBottom:
-                                    {
-                                        const float len = width * hp;
-                                        drawList->AddRectFilled({ headPos.X - width2, footPos.Y + adjust }, { headPos.X - width2 + len, footPos.Y + adjust * 2.f }, ImGui::GetColorU32(IM_COL32(0, 255, 0, 255)));
-                                        drawList->AddRectFilled({ headPos.X - width2 + len, footPos.Y + adjust }, { headPos.X + width2, footPos.Y + adjust * 2.f }, ImGui::GetColorU32(IM_COL32(255, 0, 0, 255)));
-                                        break;
-                                    }
-                                    case Config::EBar::ETop:
-                                    {
-                                        const float len = width * hp;
-                                        drawList->AddRectFilled({ headPos.X - width2, headPos.Y - adjust * 2.f }, { headPos.X - width2 + len, headPos.Y - adjust }, ImGui::GetColorU32(IM_COL32(0, 255, 0, 255)));
-                                        drawList->AddRectFilled({ headPos.X - width2 + len, headPos.Y - adjust * 2.f }, { headPos.X + width2, headPos.Y - adjust }, ImGui::GetColorU32(IM_COL32(255, 0, 0, 255)));
-                                        break;
-                                    }
-                                    }
-          
-                                }
-                            
-                                if (cfg.visuals.players.bSkeleton)
-                                {
-                                    auto const mesh = actor->Mesh;
-                                    if (!actor->Mesh) continue;
-
-
-                                    const BYTE bodyHead[] = { 4, 5, 6, 51, 7, 6, 80, 7, 8, 9 };
-                                    const BYTE neckHandR[] = { 80, 81, 82, 83, 84 };
-                                    const BYTE neckHandL[] = { 51, 52, 53, 54, 55 };
-                                    const BYTE bodyFootR[] = { 4, 111, 112, 113, 114 };
-                                    const BYTE bodyFootL[] = { 4, 106, 107, 108, 109 };
-
-                                    const std::pair<const BYTE*, const BYTE> skeleton[] = { {bodyHead, 10}, {neckHandR, 5}, {neckHandL, 5}, {bodyFootR, 5}, {bodyFootL, 5} };
-
-
-                                    
-                                    const FMatrix comp2world = mesh->K2_GetComponentToWorld().ToMatrixWithScale();
-
-                                    if (!Drawing::RenderSkeleton(localController, mesh, comp2world, skeleton, 5, col)) continue;
-
-                                   
-                                }
-                            
-                                continue;
-                            
                             }
-                            
-                            //Skeletons
-                            else if (cfg.visuals.skeletons.bEnable && actor->isSkeleton() && !actor->IsDead()) {
-                                // todo: make a function to draw both skeletons and players as they are similar
-                                FVector origin, extent;
-                                actor->GetActorBounds(true, origin, extent);
-                            
+
+                            continue;
+                        }
+
+                        //Sharks
+                        else if (cfg.visuals.sharks.bEnable && actor->isShark())
+                        {
+                            FVector origin, extent;
+                            actor->GetActorBounds(true, origin, extent);
+
+                            FVector2D headPos;
+                            if (!localController->ProjectWorldLocationToScreen({ origin.X, origin.Y, origin.Z + extent.Z }, headPos)) continue;
+                            FVector2D footPos;
+                            if (!localController->ProjectWorldLocationToScreen({ origin.X, origin.Y, origin.Z - extent.Z }, footPos)) continue;
+
+                            const float height = abs(footPos.Y - headPos.Y);
+                            const float width = height * 0.6f;
+
+                            const bool bVisible = localController->LineOfSightTo(actor, cameraLoc, false);
+                            const ImVec4 col = bVisible ? cfg.visuals.animals.colorVis : cfg.visuals.animals.colorInv;
+
+
+                            if (cfg.visuals.sharks.bSkeleton)
+                            {
+                                auto const shark = reinterpret_cast<ASharkPawn*>(actor);
+                                auto const mesh = shark->Mesh;
+                                if (!actor->Mesh) continue;
+                                const FMatrix comp2world = mesh->K2_GetComponentToWorld().ToMatrixWithScale();
+                                switch (shark->SwimmingCreatureType)
+                                {
+                                case ESwimmingCreatureType::Shark:
+                                {
+                                    const BYTE bone1[] = { 17, 16, 5, 6, 7, 8, 9, 10, 11, 12 };
+                                    const BYTE bone2[] = { 10, 13, 14 };
+                                    const BYTE bone3[] = { 5, 18, 19 };
+                                    const BYTE bone4[] = { 6, 15, 7 };
+                                    const std::pair<const BYTE*, const BYTE> skeleton[] = { {bone1, 10}, {bone2, 3}, {bone3, 3}, {bone4, 3} };
+                                    if (!Drawing::RenderSkeleton(localController, mesh, comp2world, skeleton, 4, col)) continue;
+                                    break;
+                                }
+                                case ESwimmingCreatureType::TinyShark:
+                                {
+                                    const BYTE bone1[] = { 26, 25, 24, 23, 22, 21, 20, 19 };
+                                    const BYTE bone2[] = { 28, 27, 24 };
+                                    const BYTE bone3[] = { 33, 32, 31, 21, 34, 35, 36 };
+                                    const std::pair<const BYTE*, const BYTE> skeleton[] = { {bone1, 8}, {bone2, 3}, {bone3, 7} };
+                                    if (!Drawing::RenderSkeleton(localController, mesh, comp2world, skeleton, 3, col)) continue;
+                                    break;
+                                }
+                                }
+
+
+                            }
+
+                            if (cfg.visuals.sharks.bName)
+                            {
+                                char name[0x20];
+                                const int dist = localLoc.DistTo(origin) * 0.01f;
+                                sprintf_s(name, "Shark [%d]", dist);
+                                const float adjust = height * 0.05f;
+                                FVector2D pos = { headPos.X, headPos.Y - adjust };
+                                Drawing::RenderText(name, pos, cfg.visuals.sharks.textCol);
+                            }
+
+                            continue;
+                        }
+
+                        //Ships
+                        else if (cfg.visuals.ships.bEnable)
+                        {
+                            if (actor->isShip())
+                            {
                                 const FVector location = actor->K2_GetActorLocation();
-                                FVector2D headPos;
-                                if (!localController->ProjectWorldLocationToScreen({ location.X, location.Y, location.Z + extent.Z }, headPos)) continue;
-                                FVector2D footPos;
-                                if (!localController->ProjectWorldLocationToScreen({ location.X, location.Y, location.Z - extent.Z }, footPos)) continue;
+                                const int dist = localLoc.DistTo(location) * 0.01f;
+                                //distanceArray[0] = dist;
 
-                                const float height = abs(footPos.Y - headPos.Y);
-                                const float width = height * 0.4f;
-
-                                const bool bVisible = localController->LineOfSightTo(actor, cameraLoc, false);
-                                const ImVec4 col = bVisible ? cfg.visuals.skeletons.colorVis : cfg.visuals.skeletons.colorInv;
-                               
-                                if (cfg.visuals.skeletons.bSkeleton)
+                                if (cfg.visuals.ships.bName && dist <= 1500)
                                 {
-                                    auto const mesh = actor->Mesh;
-                                    if (!actor->Mesh) continue;
-
-                                    const BYTE bodyHead[] = { 4, 5, 6, 7, 8, 9 };
-                                    const BYTE neckHandR[] = { 7, 41, 42, 43 };
-                                    const BYTE neckHandL[] = { 7, 12, 13, 14 };
-                                    const BYTE bodyFootR[] = { 4, 71, 72, 73, 74 };
-                                    const BYTE bodyFootL[] = { 4, 66, 67, 68, 69 };
-
-                                    const std::pair<const BYTE*, const BYTE> skeleton[] = { {bodyHead, 6}, {neckHandR, 4}, {neckHandL, 4}, {bodyFootR, 5}, {bodyFootL, 5} };
-
-                                    const FMatrix comp2world = mesh->K2_GetComponentToWorld().ToMatrixWithScale();
-
-                                    /*for (auto i = 0; i < 122; i++)
-                                    {
-                                        FVector pos;
-                                        if (mesh->GetBone(i, comp2world, pos))
-                                        {
-                                            FVector2D screen;
-                                            if (!localController->ProjectWorldLocationToScreen(pos, screen)) continue;
-                                            char text[0x30];
-                                            auto len = sprintf_s(text, "%d", i);
-                                            Drawing::RenderText(text, screen, ImVec4(1.f, 1.f, 1.f, 1.f));
-                                        };
-                                    }*/
-
-                                    if (!Drawing::RenderSkeleton(localController, mesh, comp2world, skeleton, 5, col)) continue;
-
-                                    
-                                }
-
-                                switch (cfg.visuals.skeletons.boxType)
-                                {
-                                case Config::EBox::E2DBoxes:
-                                {
-                                    Drawing::Render2DBox(headPos, footPos, height, width, col);
-                                    break;
-                                }
-                                case Config::EBox::E3DBoxes:
-                                {
-                                    FRotator rotation = actor->K2_GetActorRotation();
-                                    if (!Drawing::Render3DBox(localController, origin, extent, rotation, col)) continue;
-                                    break;
-                                }
-                                /*
-                                case Config::EBox::EDebugBoxes:
-                                {
-                                    UKismetMathLibrary::DrawDebugBox(actor, origin, extent, *reinterpret_cast<const FLinearColor*>(&col), actor->K2_GetActorRotation(), 0.0f);
-                                    break;
-                                }
-                                */
-                                }
-
-                                if (cfg.visuals.skeletons.bName)
-                                {
-                                    const int dist = localLoc.DistTo(location) * 0.01f;
-                                    char name[0x64];
-                                    sprintf_s(name, "Skeleton [%d]", dist);
-                                    Drawing::RenderText(name, headPos, cfg.visuals.skeletons.textCol);
-                                }
-
-                                if (cfg.visuals.skeletons.barType != Config::EBar::ENone)
-                                {
-                                    auto const healthComp = actor->HealthComponent;
-                                    if (!healthComp) continue;
-                                    const float hp = healthComp->GetCurrentHealth() / healthComp->GetMaxHealth();
-                                    const float width2 = width * 0.5f;
-                                    const float adjust = height * 0.025f;
-
-                                    switch (cfg.visuals.skeletons.barType)
-                                    {
-                                    case Config::EBar::ELeft:
-                                    {
-                                        const float len = height * hp;
-                                        drawList->AddRectFilled({ headPos.X - width2 - adjust * 2.f, headPos.Y }, { headPos.X - width2 - adjust, footPos.Y - len }, ImGui::GetColorU32(IM_COL32(255, 0, 0, 255)));
-                                        drawList->AddRectFilled({ headPos.X - width2 - adjust * 2.f, footPos.Y - len }, { headPos.X - width2 - adjust, footPos.Y }, ImGui::GetColorU32(IM_COL32(0, 255, 0, 255)));
-                                        break;
-                                    }
-                                    case Config::EBar::ERight:
-                                    {
-                                        const float len = height * hp;
-                                        drawList->AddRectFilled({ headPos.X + width2 + adjust, headPos.Y }, { headPos.X + width2 + adjust * 2.f, footPos.Y - len }, ImGui::GetColorU32(IM_COL32(255, 0, 0, 255)));
-                                        drawList->AddRectFilled({ headPos.X + width2 + adjust, footPos.Y - len }, { headPos.X + width2 + adjust * 2.f, footPos.Y }, ImGui::GetColorU32(IM_COL32(0, 255, 0, 255)));
-                                        break;
-                                    }
-                                    case Config::EBar::EBottom:
-                                    {
-                                        const float len = width * hp;
-                                        drawList->AddRectFilled({ headPos.X - width2, footPos.Y + adjust }, { headPos.X - width2 + len, footPos.Y + adjust * 2.f }, ImGui::GetColorU32(IM_COL32(0, 255, 0, 255)));
-                                        drawList->AddRectFilled({ headPos.X - width2 + len, footPos.Y + adjust }, { headPos.X + width2, footPos.Y + adjust * 2.f }, ImGui::GetColorU32(IM_COL32(255, 0, 0, 255)));
-                                        break;
-                                    }
-                                    case Config::EBar::ETop:
-                                    {
-                                        const float len = width * hp;
-                                        drawList->AddRectFilled({ headPos.X - width2, headPos.Y - adjust * 2.f }, { headPos.X - width2 + len, headPos.Y - adjust }, ImGui::GetColorU32(IM_COL32(0, 255, 0, 255)));
-                                        drawList->AddRectFilled({ headPos.X - width2 + len, headPos.Y - adjust * 2.f }, { headPos.X + width2, headPos.Y - adjust }, ImGui::GetColorU32(IM_COL32(255, 0, 0, 255)));
-                                        break;
-                                    }
-                                    }
-
-                                }
-
-                                
-                                continue;
-                            }
-
-                            //Animals
-                            else if (cfg.visuals.animals.bEnable && actor->isAnimal())
-                            {
-                                FVector origin, extent;
-                                actor->GetActorBounds(true, origin, extent);
-                               
-                                FVector2D headPos;
-                                if (!localController->ProjectWorldLocationToScreen({ origin.X, origin.Y, origin.Z + extent.Z }, headPos)) continue;
-                                FVector2D footPos;
-                                if (!localController->ProjectWorldLocationToScreen({ origin.X, origin.Y, origin.Z - extent.Z }, footPos)) continue;
-
-                                float height = abs(footPos.Y - headPos.Y);
-                                float width = height * 0.6f;
-
-                                bool bVisible = localController->LineOfSightTo(actor, cameraLoc, false);
-                                ImVec4 col = bVisible ? cfg.visuals.animals.colorVis : cfg.visuals.animals.colorInv;
-
-                                switch (cfg.visuals.animals.boxType)
-                                {
-                                case Config::EBox::E2DBoxes:
-                                {
-                                    Drawing::Render2DBox(headPos, footPos, height, width, col);
-                                    break;
-                                }
-                                case Config::EBox::E3DBoxes:
-                                {
-                                    FRotator rotation = actor->K2_GetActorRotation();
-                                    FVector ext = { 40.f, 40.f, extent.Z };
-                                    if (!Drawing::Render3DBox(localController, origin, ext, rotation, col)) continue;
-                                    break;
-                                }
-                                /*
-                                case Config::EBox::EDebugBoxes:
-                                {
-                                    FVector ext = { 40.f, 40.f, extent.Z };
-                                    UKismetMathLibrary::DrawDebugBox(actor, origin, ext, *reinterpret_cast<const FLinearColor*>(&col), actor->K2_GetActorRotation(), 0.0f);
-                                    break;
-                                }
-                                 */
-                                }
-
-                                if (cfg.visuals.animals.bName)
-                                {
-
-                                    auto displayName = reinterpret_cast<AFauna*>(actor)->DisplayName;
-                                    if (displayName) {
-                                        const int dist = localLoc.DistTo(origin) * 0.01f;
-                                        char name[0x64];
-                                        const int len = displayName->multi(name, 0x50);
-                                        snprintf(name + len, sizeof(name) - len, " [%d]", dist);
-                                        const float adjust = height * 0.05f;
-                                        FVector2D pos = { headPos.X, headPos.Y - adjust };
-                                        Drawing::RenderText(name, pos, cfg.visuals.animals.textCol);
-                                    }
-                                }
-
-                                continue;
-                            }
-                            
-                            //Sharks
-                            else if (cfg.visuals.sharks.bEnable && actor->isShark())
-                            {
-                                FVector origin, extent;
-                                actor->GetActorBounds(true, origin, extent);
-
-                                FVector2D headPos;
-                                if (!localController->ProjectWorldLocationToScreen({ origin.X, origin.Y, origin.Z + extent.Z }, headPos)) continue;
-                                FVector2D footPos;
-                                if (!localController->ProjectWorldLocationToScreen({ origin.X, origin.Y, origin.Z - extent.Z }, footPos)) continue;
-
-                                const float height = abs(footPos.Y - headPos.Y);
-                                const float width = height * 0.6f;
-
-                                const bool bVisible = localController->LineOfSightTo(actor, cameraLoc, false);
-                                const ImVec4 col = bVisible ? cfg.visuals.animals.colorVis : cfg.visuals.animals.colorInv;
-
-
-                                if (cfg.visuals.sharks.bSkeleton)
-                                {
-                                    auto const shark = reinterpret_cast<ASharkPawn*>(actor);
-                                    auto const mesh = shark->Mesh;
-                                    if (!actor->Mesh) continue;
-                                    const FMatrix comp2world = mesh->K2_GetComponentToWorld().ToMatrixWithScale();
-                                    switch (shark->SwimmingCreatureType)
-                                    {
-                                    case ESwimmingCreatureType::Shark: 
-                                    {
-                                        const BYTE bone1[] = { 17, 16, 5, 6, 7, 8, 9, 10, 11, 12 };
-                                        const BYTE bone2[] = { 10, 13, 14 };
-                                        const BYTE bone3[] = { 5, 18, 19 };
-                                        const BYTE bone4[] = { 6, 15, 7 };
-                                        const std::pair<const BYTE*, const BYTE> skeleton[] = { {bone1, 10}, {bone2, 3}, {bone3, 3}, {bone4, 3} };
-                                        if (!Drawing::RenderSkeleton(localController, mesh, comp2world, skeleton, 4, col)) continue;
-                                        break;
-                                    }
-                                    case ESwimmingCreatureType::TinyShark:
-                                    {
-                                        const BYTE bone1[] = { 26, 25, 24, 23, 22, 21, 20, 19 };
-                                        const BYTE bone2[] = { 28, 27, 24 };
-                                        const BYTE bone3[] = { 33, 32, 31, 21, 34, 35, 36 };
-                                        const std::pair<const BYTE*, const BYTE> skeleton[] = { {bone1, 8}, {bone2, 3}, {bone3, 7}};
-                                        if (!Drawing::RenderSkeleton(localController, mesh, comp2world, skeleton, 3, col)) continue;
-                                        break;
-                                    }
-                                    }
-                                   
-                                    
-                                }
-
-                                if (cfg.visuals.sharks.bName)
-                                {
-                                    char name[0x20];
-                                    const int dist = localLoc.DistTo(origin) * 0.01f;
-                                    sprintf_s(name, "Shark [%d]", dist);
-                                    const float adjust = height * 0.05f;
-                                    FVector2D pos = { headPos.X, headPos.Y - adjust };
-                                    Drawing::RenderText(name, pos, cfg.visuals.sharks.textCol);
-                                }
-
-                                continue;
-                            }
-                            
-                            //Ships
-                            else if (cfg.visuals.ships.bEnable)
-                            {
-                                if (actor->isShip()) 
-                                {
-                                    const FVector location = actor->K2_GetActorLocation();
-                                    const int dist = localLoc.DistTo(location) * 0.01f;
-                                    //distanceArray[0] = dist;
-
-                                    if (cfg.visuals.ships.bName && dist <= 1500)
-                                    {
-                                        FVector2D screen;
-                                        if (localController->ProjectWorldLocationToScreen(location, screen)) {
-                                            int amount = 0;
-                                            auto water = actor->GetInternalWater();
-                                            if (water) amount = water->GetNormalizedWaterAmount() * 100.f;
-                                            char name[0x40];
-                                            sprintf_s(name, "Ship (%d%%) [%d]", amount, dist);
-                                            Drawing::RenderText(const_cast<char*>(name), screen, cfg.visuals.ships.textCol);
-                                        };
-                                    }
-
-                                    if (cfg.visuals.ships.bDamage && dist <= 300)
-                                    {
-                                        auto const damage = actor->GetHullDamage();
-                                        if (!damage) continue;
-                                        const auto holes = damage->ActiveHullDamageZones;
-                                        for (auto h = 0u; h < holes.Count; h++)
-                                        {
-                                            auto const hole = holes[h];
-                                            const FVector location = hole->K2_GetActorLocation();
-                                            FVector2D screen;
-                                            if (localController->ProjectWorldLocationToScreen(location, screen))
-                                            {
-                                                auto color = cfg.visuals.ships.damageColor;
-                                                drawList->AddLine({ screen.X - 6.f, screen.Y + 6.f }, { screen.X + 6.f, screen.Y - 6.f }, ImGui::GetColorU32(color));
-                                                drawList->AddLine({ screen.X - 6.f, screen.Y - 6.f }, { screen.X + 6.f, screen.Y + 6.f }, ImGui::GetColorU32(color));
-                                            }
-                                        }
-                                    }
-
-                                    switch (cfg.visuals.ships.boxType)
-                                    {
-                                    case Config::EShipBox::E3DBoxes:
-                                    {
-                                        
-                                        FVector origin, extent;
-                                        actor->GetActorBounds(true, origin, extent);
-                                        FRotator rotation = actor->K2_GetActorRotation();
-                                        if (!Drawing::Render3DBox(localController, origin, extent, rotation, cfg.visuals.ships.boxColor)) continue;
-                                        break;
-                                    }
-                                    /*
-                                    case Config::EBox::EDebugBoxes:
-                                    {
-                                        FVector origin, extent;
-                                        actor->GetActorBounds(true, origin, extent);
-                                        UKismetMathLibrary::DrawDebugBox(reinterpret_cast<UObject*>(world), origin, extent, *reinterpret_cast<const FLinearColor*>(&cfg.visuals.ships.boxColor), actor->K2_GetActorRotation(), 0.f);
-                                        break;
-                                    }
-                                    */
-                                    }
-
-                                    continue;
-                                }
-                                else if (actor->isFarShip())
-                                {
-                                    const FVector location = actor->K2_GetActorLocation();
-                                    const int dist = localLoc.DistTo(location) * 0.01f;
-
-                                    if (cfg.visuals.ships.bName && dist > 1500)
-                                    {
-                                        FVector2D screen;
-                                        if (localController->ProjectWorldLocationToScreen(location, screen)) {
-                                            char name[0x30];
-                                            sprintf_s(name, "Ship [%d]", dist);
-                                            Drawing::RenderText(const_cast<char*>(name), screen, cfg.visuals.ships.textCol);
-                                        };
-                                    }
-                                    continue;
-                                }
-                            }
-                            
-                            //Puzzle
-                            if (cfg.visuals.puzzles.bEnable && actor->isPuzzleVault())
-                            {
-                                auto vault = reinterpret_cast<APuzzleVault*>(actor);
-                                if (cfg.visuals.puzzles.bDoor)
-                                {
-                                    const FVector location = reinterpret_cast<ACharacter*>(vault->OuterDoor)->K2_GetActorLocation();
                                     FVector2D screen;
                                     if (localController->ProjectWorldLocationToScreen(location, screen)) {
-                                        char name[0x64];
-                                        const int dist = localLoc.DistTo(location) * 0.01f;
-                                        sprintf_s(name, "Vault door [%d]", dist);
-                                        Drawing::RenderText(name, screen, cfg.visuals.puzzles.textCol);
+                                        int amount = 0;
+                                        auto water = actor->GetInternalWater();
+                                        if (water) amount = water->GetNormalizedWaterAmount() * 100.f;
+                                        char name[0x40];
+                                        sprintf_s(name, "Ship (%d%%) [%d]", amount, dist);
+                                        Drawing::RenderText(const_cast<char*>(name), screen, cfg.visuals.ships.textCol);
+                                    };
+                                }
+
+                                if (cfg.visuals.ships.bDamage && dist <= 300)
+                                {
+                                    auto const damage = actor->GetHullDamage();
+                                    if (!damage) continue;
+                                    const auto holes = damage->ActiveHullDamageZones;
+                                    for (auto h = 0u; h < holes.Count; h++)
+                                    {
+                                        auto const hole = holes[h];
+                                        const FVector location = hole->K2_GetActorLocation();
+                                        FVector2D screen;
+                                        if (localController->ProjectWorldLocationToScreen(location, screen))
+                                        {
+                                            auto color = cfg.visuals.ships.damageColor;
+                                            drawList->AddLine({ screen.X - 6.f, screen.Y + 6.f }, { screen.X + 6.f, screen.Y - 6.f }, ImGui::GetColorU32(color));
+                                            drawList->AddLine({ screen.X - 6.f, screen.Y - 6.f }, { screen.X + 6.f, screen.Y + 6.f }, ImGui::GetColorU32(color));
+                                        }
+                                    }
+                                }
+
+                                switch (cfg.visuals.ships.boxType)
+                                {
+                                case Config::EShipBox::E3DBoxes:
+                                {
+
+                                    FVector origin, extent;
+                                    actor->GetActorBounds(true, origin, extent);
+                                    FRotator rotation = actor->K2_GetActorRotation();
+                                    if (!Drawing::Render3DBox(localController, origin, extent, rotation, cfg.visuals.ships.boxColor)) continue;
+                                    break;
+                                }
+                                /*
+                                case Config::EBox::EDebugBoxes:
+                                {
+                                    FVector origin, extent;
+                                    actor->GetActorBounds(true, origin, extent);
+                                    UKismetMathLibrary::DrawDebugBox(reinterpret_cast<UObject*>(world), origin, extent, *reinterpret_cast<const FLinearColor*>(&cfg.visuals.ships.boxColor), actor->K2_GetActorRotation(), 0.f);
+                                    break;
+                                }
+                                */
+                                }
+
+                                continue;
+                            }
+                            else if (actor->isFarShip())
+                            {
+                                const FVector location = actor->K2_GetActorLocation();
+                                const int dist = localLoc.DistTo(location) * 0.01f;
+
+                                if (cfg.visuals.ships.bName && dist > 1500)
+                                {
+                                    FVector2D screen;
+                                    if (localController->ProjectWorldLocationToScreen(location, screen)) {
+                                        char name[0x30];
+                                        sprintf_s(name, "Ship [%d]", dist);
+                                        Drawing::RenderText(const_cast<char*>(name), screen, cfg.visuals.ships.textCol);
                                     };
                                 }
                                 continue;
                             }
                         }
+
+                        //Puzzle
+                        if (cfg.visuals.puzzles.bEnable && actor->isPuzzleVault())
+                        {
+                            auto vault = reinterpret_cast<APuzzleVault*>(actor);
+                            if (cfg.visuals.puzzles.bDoor)
+                            {
+                                const FVector location = reinterpret_cast<ACharacter*>(vault->OuterDoor)->K2_GetActorLocation();
+                                FVector2D screen;
+                                if (localController->ProjectWorldLocationToScreen(location, screen)) {
+                                    char name[0x64];
+                                    const int dist = localLoc.DistTo(location) * 0.01f;
+                                    sprintf_s(name, "Vault door [%d]", dist);
+                                    Drawing::RenderText(name, screen, cfg.visuals.puzzles.textCol);
+                                };
+                            }
+                            continue;
+                        }
                     }
+                    
                 }
+            }
+
+            //Islands
+            if (cfg.visuals.islands.bEnable)
+            {
+                if (cfg.visuals.islands.bName)
+                {
+                    do {
+                        auto const islandService = gameState->IslandService;
+                        if (!islandService) break;
+                        auto const islandDataAsset = islandService->IslandDataAsset;
+                        if (!islandDataAsset) break;
+                        auto const islandDataEntries = islandDataAsset->IslandDataEntries;
+                        if (!islandDataEntries.Data) break;
+                        for (auto i = 0u; i < islandDataEntries.Count; i++)
+                        {
+                            auto const island = islandDataEntries[i];
+                            auto const WorldMapData = island->WorldMapData;
+                            if (!WorldMapData) continue;
+
+                            const FVector islandLoc = WorldMapData->WorldSpaceCameraPosition;
+                            const int dist = localLoc.DistTo(islandLoc) * 0.01f;
+
+                            if (dist > cfg.visuals.islands.intMaxDist) continue;
+                            FVector2D screen;
+                            if (localController->ProjectWorldLocationToScreen(islandLoc, screen))
+                            {
+                                char name[0x64];
+                                auto len = island->LocalisedName->multi(name, 0x50);
+
+
+                                snprintf(name + len, sizeof(name) - len, " [%d]", dist);
+                                Drawing::RenderText(name, screen, cfg.visuals.islands.textCol);
+
+                            }
+                        }
+
+                    } while (false);
+                }
+            }
+
+            //No matter if in Viewport or not
+
+            //Crosshair
+            if (cfg.visuals.client.bCrosshair)
+            {
+                drawList->AddLine({ io.DisplaySize.x * 0.5f - cfg.visuals.client.fCrosshair, io.DisplaySize.y * 0.5f }, { io.DisplaySize.x * 0.5f + cfg.visuals.client.fCrosshair, io.DisplaySize.y * 0.5f }, ImGui::GetColorU32(cfg.visuals.client.crosshairColor));
+                drawList->AddLine({ io.DisplaySize.x * 0.5f, io.DisplaySize.y * 0.5f - cfg.visuals.client.fCrosshair }, { io.DisplaySize.x * 0.5f, io.DisplaySize.y * 0.5f + cfg.visuals.client.fCrosshair }, ImGui::GetColorU32(cfg.visuals.client.crosshairColor));
+            }
+
+            //Oxygen
+            if (cfg.visuals.client.bOxygen && localCharacter->IsInWater())
+            {
+                auto drownComp = localCharacter->DrowningComponent;
+                if (!drownComp) break;
+                auto level = drownComp->GetOxygenLevel();
+                auto posX = io.DisplaySize.x * 0.5f;
+                auto posY = io.DisplaySize.y * 0.85f;
+                auto barWidth2 = io.DisplaySize.x * 0.05f;
+                auto barHeight2 = io.DisplaySize.y * 0.0030f;
+                drawList->AddRectFilled({ posX - barWidth2, posY - barHeight2 }, { posX + barWidth2, posY + barHeight2 }, ImGui::GetColorU32(IM_COL32(0, 0, 0, 255)));
+                drawList->AddRectFilled({ posX - barWidth2, posY - barHeight2 }, { posX - barWidth2 + barWidth2 * level * 2.f, posY + barHeight2 }, ImGui::GetColorU32(IM_COL32(0, 200, 255, 255)));
+            }
+
+            //Compass
+            if (cfg.visuals.client.bCompass)
+            {
+
+                //float dist = cameraLoc.DistTo(location);
+
+                const char* directions[] = { "N", "NE", "E", "SE", "S", "SW", "W", "NW" };
+                int yaw = ((int)cameraRot.Yaw + 450) % 360;
+                int index = int(yaw + 22.5f) % 360 * 0.0222222f;
+
+                FVector2D pos = { io.DisplaySize.x * 0.5f, io.DisplaySize.y * 0.02f };
+                auto col = ImVec4(1.f, 1.f, 1.f, 1.f);
+
+                Drawing::RenderText(const_cast<char*>(directions[index]), pos, col);
+
+                char buf[0x30];
+                int len = sprintf_s(buf, "%d", yaw);
+                pos.Y += 15.f;
+                Drawing::RenderText(buf, pos, col);
+
             }
             
-            //No matter if in Viewport or not
-            if (cfg.visuals.bEnable)
-            {
-                //Islands
-                if (cfg.visuals.islands.bEnable)
-                {
-                    if (cfg.visuals.islands.bName)
-                    {
-                        do {
-                            auto const islandService = gameState->IslandService;
-                            if (!islandService) break;
-                            auto const islandDataAsset = islandService->IslandDataAsset;
-                            if (!islandDataAsset) break;
-                            auto const islandDataEntries = islandDataAsset->IslandDataEntries;
-                            if (!islandDataEntries.Data) break;
-                            for (auto i = 0u; i < islandDataEntries.Count; i++)
-                            {
-                                auto const island = islandDataEntries[i];
-                                auto const WorldMapData = island->WorldMapData;
-                                if (!WorldMapData) continue;
-
-                                const FVector islandLoc = WorldMapData->WorldSpaceCameraPosition;
-                                const int dist = localLoc.DistTo(islandLoc) * 0.01f;
-
-                                if (dist > cfg.visuals.islands.intMaxDist) continue;
-                                FVector2D screen;
-                                if (localController->ProjectWorldLocationToScreen(islandLoc, screen))
-                                {
-                                    char name[0x64];
-                                    auto len = island->LocalisedName->multi(name, 0x50);
-                                    
-                                    
-                                    snprintf(name + len, sizeof(name) - len, " [%d]", dist);
-                                    Drawing::RenderText(name, screen, cfg.visuals.islands.textCol);
-
-                                }
-                            }
-
-                        } while (false);
-                    }
-                }
-                
-                //Crosshair
-                if (cfg.visuals.client.bCrosshair)
-                {
-                    drawList->AddLine({ io.DisplaySize.x * 0.5f - cfg.visuals.client.fCrosshair, io.DisplaySize.y * 0.5f }, { io.DisplaySize.x * 0.5f + cfg.visuals.client.fCrosshair, io.DisplaySize.y * 0.5f }, ImGui::GetColorU32(cfg.visuals.client.crosshairColor));
-                    drawList->AddLine({ io.DisplaySize.x * 0.5f, io.DisplaySize.y * 0.5f - cfg.visuals.client.fCrosshair }, { io.DisplaySize.x * 0.5f, io.DisplaySize.y * 0.5f + cfg.visuals.client.fCrosshair }, ImGui::GetColorU32(cfg.visuals.client.crosshairColor));
-                }
-
-                //Oxygen
-                if (cfg.visuals.client.bOxygen && localCharacter->IsInWater())
-                {
-                    auto drownComp = localCharacter->DrowningComponent;
-                    if (!drownComp) break;
-                    auto level = drownComp->GetOxygenLevel();
-                    auto posX = io.DisplaySize.x * 0.5f;
-                    auto posY = io.DisplaySize.y * 0.85f;
-                    auto barWidth2 = io.DisplaySize.x * 0.05f;
-                    auto barHeight2 = io.DisplaySize.y * 0.0030f;
-                    drawList->AddRectFilled({ posX - barWidth2, posY - barHeight2 }, { posX + barWidth2, posY + barHeight2 }, ImGui::GetColorU32(IM_COL32(0, 0, 0, 255)));
-                    drawList->AddRectFilled({ posX - barWidth2, posY - barHeight2 }, { posX - barWidth2 + barWidth2 * level * 2.f, posY + barHeight2 }, ImGui::GetColorU32(IM_COL32(0, 200, 255, 255)));
-                }
-
-                //Compass
-                if (cfg.visuals.client.bCompass)
-                {
-
-                    //float dist = cameraLoc.DistTo(location);
-               
-                    const char* directions[] = { "N", "NE", "E", "SE", "S", "SW", "W", "NW" };
-                    int yaw = ((int)cameraRot.Yaw + 450) % 360;
-                    int index = int(yaw + 22.5f) % 360 * 0.0222222f;
-
-                    FVector2D pos = { io.DisplaySize.x * 0.5f, io.DisplaySize.y * 0.02f };
-                    auto col = ImVec4(1.f, 1.f, 1.f, 1.f);
-                    
-                    Drawing::RenderText(const_cast<char*>(directions[index]), pos, col);
-
-                    char buf[0x30];
-                    int len = sprintf_s(buf, "%d", yaw);
-                    pos.Y += 15.f;
-                    Drawing::RenderText(buf, pos, col);
-
-                }
-            }
 
             if (aimBest.target != nullptr)
             {
@@ -1105,31 +1116,16 @@ HRESULT Cheat::Renderer::PresentHook(IDXGISwapChain* swapChain, UINT syncInterva
             //Tab 1 "Visuals"
             if (ImGui::BeginTabItem("Visuals")) {
 
-                ImGui::Text("Global Visuals");
-                if (ImGui::BeginChild("Global", ImVec2(0.f, 38.f), true, 0))
-                {
-                    ImGui::Checkbox("Enable", &cfg.visuals.bEnable);
-                }
-                ImGui::EndChild();
-
                 ImGui::Columns(2, "CLM1", false);
                 const char* boxes[] = { "None", "2DBox", "3DBox" };
                 
                 ImGui::Text("Players");
                 if (ImGui::BeginChild("PlayersSettings", ImVec2(0.f, 310.f), true, 0))
                 {
-                    const char* bars[] = { "None", "2DRectLeft", "2DRectRight", "2DRectBottom", "2DRectTop" };
                     ImGui::Checkbox("Enable", &cfg.visuals.players.bEnable);
                     ImGui::Checkbox("Draw teammates", &cfg.visuals.players.bDrawTeam);
                     ImGui::Checkbox("Draw name", &cfg.visuals.players.bName);
                     ImGui::Checkbox("Draw skeleton", &cfg.visuals.players.bSkeleton);
-                    ImGui::Combo("Box type", reinterpret_cast<int*>(&cfg.visuals.players.boxType), boxes, IM_ARRAYSIZE(boxes));
-                    ImGui::Combo("Health bar type", reinterpret_cast<int*>(&cfg.visuals.players.barType), bars, IM_ARRAYSIZE(bars));
-                    ImGui::ColorEdit4("Visible Enemy color", &cfg.visuals.players.enemyColorVis.x, 0);
-                    ImGui::ColorEdit4("Invisible Enemy color", &cfg.visuals.players.enemyColorInv.x, 0);
-                    ImGui::ColorEdit4("Visible Team color", &cfg.visuals.players.teamColorVis.x, 0);
-                    ImGui::ColorEdit4("Invisible Team color", &cfg.visuals.players.teamColorInv.x, 0);
-                    ImGui::ColorEdit4("Text color", &cfg.visuals.players.textCol.x, 0);
                 }
                 ImGui::EndChild();
 
@@ -1141,11 +1137,6 @@ HRESULT Cheat::Renderer::PresentHook(IDXGISwapChain* swapChain, UINT syncInterva
                     ImGui::Checkbox("Enable", &cfg.visuals.skeletons.bEnable);
                     ImGui::Checkbox("Draw name", &cfg.visuals.skeletons.bName);
                     ImGui::Checkbox("Draw skeleton", &cfg.visuals.skeletons.bSkeleton);
-                    ImGui::Combo("Box type", reinterpret_cast<int*>(&cfg.visuals.skeletons.boxType), boxes, IM_ARRAYSIZE(boxes));
-                    ImGui::ColorEdit4("Visible Color", &cfg.visuals.skeletons.colorVis.x, 0);
-                    ImGui::ColorEdit4("Invisible Color", &cfg.visuals.skeletons.colorInv.x, 0);
-                    ImGui::ColorEdit4("Text color", &cfg.visuals.skeletons.textCol.x, 0);
-
                 }
                 ImGui::EndChild();
 
@@ -1153,15 +1144,9 @@ HRESULT Cheat::Renderer::PresentHook(IDXGISwapChain* swapChain, UINT syncInterva
 
                 ImGui::Text("Ships");
                 if (ImGui::BeginChild("ShipsSettings", ImVec2(0.f, 200.f), true, 0)) {
-
-                    const char* shipBoxes[] = {"None", "3DBox"};
                     ImGui::Checkbox("Enable", &cfg.visuals.ships.bEnable);
                     ImGui::Checkbox("Draw name", &cfg.visuals.ships.bName);
-                    ImGui::Checkbox("Show holes", &cfg.visuals.ships.bDamage);
-                    ImGui::Combo("Box type", reinterpret_cast<int*>(&cfg.visuals.ships.boxType), shipBoxes, IM_ARRAYSIZE(shipBoxes));
-                    ImGui::ColorEdit4("Box color", &cfg.visuals.ships.boxColor.x, 0);
-                    ImGui::ColorEdit4("Damage color", &cfg.visuals.ships.damageColor.x, 0);
-                    ImGui::ColorEdit4("Text color", &cfg.visuals.ships.textCol.x, 0);
+                    ImGui::Checkbox("Show holes", &cfg.visuals.ships.bDamage);   
                 }
                 ImGui::EndChild();
 
@@ -1171,8 +1156,6 @@ HRESULT Cheat::Renderer::PresentHook(IDXGISwapChain* swapChain, UINT syncInterva
                 if (ImGui::BeginChild("IslandsSettings", ImVec2(0.f, 200.f), true, 0)) {
                     ImGui::Checkbox("Enable", &cfg.visuals.islands.bEnable);
                     ImGui::Checkbox("Draw names", &cfg.visuals.islands.bName);
-                    ImGui::SliderInt("Max distance", &cfg.visuals.islands.intMaxDist, 100, 10000, "%d", ImGuiSliderFlags_AlwaysClamp);
-                    ImGui::ColorEdit4("Text color", &cfg.visuals.islands.textCol.x, 0);
                 }
                 ImGui::EndChild();
 
@@ -1181,9 +1164,9 @@ HRESULT Cheat::Renderer::PresentHook(IDXGISwapChain* swapChain, UINT syncInterva
                 ImGui::Text("Items");
                 if (ImGui::BeginChild("ItemsSettings", ImVec2(0.f, 220.f), true, 0))
                 {
-                    ImGui::Checkbox("Enable", &cfg.visuals.items.bEnable);
-                    ImGui::Checkbox("Draw name", &cfg.visuals.items.bName);
-                    ImGui::ColorEdit4("Text color", &cfg.visuals.items.textCol.x, 0);
+                    ImGui::Checkbox("Show Items", &cfg.visuals.items.bEnable);
+                    ImGui::Checkbox("Show Barrels", &cfg.visuals.barrels.bEnable);
+                    ImGui::Checkbox("Show Shipwrecks", &cfg.visuals.shipwrecks.bEnable);
                 }
                 ImGui::EndChild();
 
@@ -1194,10 +1177,6 @@ HRESULT Cheat::Renderer::PresentHook(IDXGISwapChain* swapChain, UINT syncInterva
                 {
                     ImGui::Checkbox("Enable", &cfg.visuals.animals.bEnable);
                     ImGui::Checkbox("Draw name", &cfg.visuals.animals.bName);
-                    ImGui::Combo("Box type", reinterpret_cast<int*>(&cfg.visuals.animals.boxType), boxes, IM_ARRAYSIZE(boxes));
-                    ImGui::ColorEdit4("Visible Color", &cfg.visuals.animals.colorVis.x, 0);
-                    ImGui::ColorEdit4("Invisible Color", &cfg.visuals.animals.colorInv.x, 0);
-                    ImGui::ColorEdit4("Text color", &cfg.visuals.animals.textCol.x, 0);
                 }
 
                 ImGui::EndChild();
@@ -1210,10 +1189,6 @@ HRESULT Cheat::Renderer::PresentHook(IDXGISwapChain* swapChain, UINT syncInterva
                     ImGui::Checkbox("Enable", &cfg.visuals.sharks.bEnable);
                     ImGui::Checkbox("Draw skeleton", &cfg.visuals.sharks.bSkeleton);
                     ImGui::Checkbox("Draw name", &cfg.visuals.sharks.bName);
-                    //ImGui::Combo("Box type", reinterpret_cast<int*>(&cfg.visuals.sharks.boxType), boxes, IM_ARRAYSIZE(boxes));
-                    ImGui::ColorEdit4("Visible Color", &cfg.visuals.sharks.colorVis.x, 0);
-                    ImGui::ColorEdit4("Invisible Color", &cfg.visuals.sharks.colorInv.x, 0);
-                    ImGui::ColorEdit4("Text color", &cfg.visuals.sharks.textCol.x, 0);
                 }
                 ImGui::EndChild();
 
@@ -1225,19 +1200,7 @@ HRESULT Cheat::Renderer::PresentHook(IDXGISwapChain* swapChain, UINT syncInterva
 
                     ImGui::Checkbox("Enable", &cfg.visuals.puzzles.bEnable);
                     ImGui::Checkbox("Draw doors", &cfg.visuals.puzzles.bDoor);
-                    ImGui::ColorEdit4("Text color", &cfg.visuals.puzzles.textCol.x, 0);
 
-                }
-                ImGui::EndChild();
-
-                ImGui::NextColumn();
-
-                ImGui::Text("Shipwrecks");
-                if (ImGui::BeginChild("ShipwrecksSettings", ImVec2(0.f, 220.f), true, 0))
-                {
-                    ImGui::Checkbox("Enable", &cfg.visuals.shipwrecks.bEnable);
-                    ImGui::Checkbox("Draw name", &cfg.visuals.shipwrecks.bName);
-                    ImGui::ColorEdit4("Text color", &cfg.visuals.shipwrecks.textCol.x, 0);
                 }
                 ImGui::EndChild();
 
@@ -1468,6 +1431,99 @@ HRESULT Cheat::Renderer::PresentHook(IDXGISwapChain* swapChain, UINT syncInterva
 
                 ImGui::EndTabItem();
             }
+            //Tab 4 "Configuration"
+            if (ImGui::BeginTabItem("Configuration")) {
+
+                ImGui::Columns(2, "CLM1", false);
+                const char* boxes[] = { "None", "2DBox", "3DBox" };
+
+                ImGui::Text("Players");
+                if (ImGui::BeginChild("PlayersSettings", ImVec2(0.f, 310.f), true, 0))
+                {
+                    const char* bars[] = { "None", "2DRectLeft", "2DRectRight", "2DRectBottom", "2DRectTop" };
+                    ImGui::Combo("Box type", reinterpret_cast<int*>(&cfg.visuals.players.boxType), boxes, IM_ARRAYSIZE(boxes));
+                    ImGui::Combo("Health bar type", reinterpret_cast<int*>(&cfg.visuals.players.barType), bars, IM_ARRAYSIZE(bars));
+                    ImGui::ColorEdit4("Visible Enemy color", &cfg.visuals.players.enemyColorVis.x, 0);
+                    ImGui::ColorEdit4("Invisible Enemy color", &cfg.visuals.players.enemyColorInv.x, 0);
+                    ImGui::ColorEdit4("Visible Team color", &cfg.visuals.players.teamColorVis.x, 0);
+                    ImGui::ColorEdit4("Invisible Team color", &cfg.visuals.players.teamColorInv.x, 0);
+                    ImGui::ColorEdit4("Text color", &cfg.visuals.players.textCol.x, 0);
+                }
+                ImGui::EndChild();
+
+                ImGui::NextColumn();
+
+                ImGui::Text("Skeletons");
+                if (ImGui::BeginChild("SkeletonsSettings", ImVec2(0.f, 310.f), true, 0))
+                {
+                    ImGui::Combo("Box type", reinterpret_cast<int*>(&cfg.visuals.skeletons.boxType), boxes, IM_ARRAYSIZE(boxes));
+                    ImGui::ColorEdit4("Visible Color", &cfg.visuals.skeletons.colorVis.x, 0);
+                    ImGui::ColorEdit4("Invisible Color", &cfg.visuals.skeletons.colorInv.x, 0);
+                    ImGui::ColorEdit4("Text color", &cfg.visuals.skeletons.textCol.x, 0);
+
+                }
+                ImGui::EndChild();
+
+                ImGui::NextColumn();
+
+                ImGui::Text("Ships");
+                if (ImGui::BeginChild("ShipsSettings", ImVec2(0.f, 200.f), true, 0)) {
+
+                    const char* shipBoxes[] = { "None", "3DBox" };
+                    ImGui::Combo("Box type", reinterpret_cast<int*>(&cfg.visuals.ships.boxType), shipBoxes, IM_ARRAYSIZE(shipBoxes));
+                    ImGui::ColorEdit4("Box color", &cfg.visuals.ships.boxColor.x, 0);
+                    ImGui::ColorEdit4("Damage color", &cfg.visuals.ships.damageColor.x, 0);
+                    ImGui::ColorEdit4("Text color", &cfg.visuals.ships.textCol.x, 0);
+                }
+                ImGui::EndChild();
+
+                ImGui::NextColumn();
+
+                ImGui::Text("Islands");
+                if (ImGui::BeginChild("IslandsSettings", ImVec2(0.f, 200.f), true, 0)) {
+                    ImGui::SliderInt("Max distance", &cfg.visuals.islands.intMaxDist, 100, 10000, "%d", ImGuiSliderFlags_AlwaysClamp);
+                    ImGui::ColorEdit4("Text color", &cfg.visuals.islands.textCol.x, 0);
+                }
+                ImGui::EndChild();
+
+                ImGui::NextColumn();
+
+                ImGui::Text("Animals");
+                if (ImGui::BeginChild("AnimalsSettings", ImVec2(0.f, 220.f), true, 0))
+                {
+                    ImGui::Combo("Box type", reinterpret_cast<int*>(&cfg.visuals.animals.boxType), boxes, IM_ARRAYSIZE(boxes));
+                    ImGui::ColorEdit4("Visible Color", &cfg.visuals.animals.colorVis.x, 0);
+                    ImGui::ColorEdit4("Invisible Color", &cfg.visuals.animals.colorInv.x, 0);
+                    ImGui::ColorEdit4("Text color", &cfg.visuals.animals.textCol.x, 0);
+                }
+
+                ImGui::EndChild();
+
+                ImGui::NextColumn();
+
+                ImGui::Text("Sharks");
+                if (ImGui::BeginChild("SharksSettings", ImVec2(0.f, 220.f), true, 0))
+                {
+                    //ImGui::Combo("Box type", reinterpret_cast<int*>(&cfg.visuals.sharks.boxType), boxes, IM_ARRAYSIZE(boxes));
+                    ImGui::ColorEdit4("Visible Color", &cfg.visuals.sharks.colorVis.x, 0);
+                    ImGui::ColorEdit4("Invisible Color", &cfg.visuals.sharks.colorInv.x, 0);
+                    ImGui::ColorEdit4("Text color", &cfg.visuals.sharks.textCol.x, 0);
+                }
+                ImGui::EndChild();
+
+                ImGui::NextColumn();
+
+                ImGui::Text("Puzzles");
+                if (ImGui::BeginChild("PuzzlesSettings", ImVec2(0.f, 220.f), true, 0))
+                {
+                    ImGui::ColorEdit4("Text color", &cfg.visuals.puzzles.textCol.x, 0);
+                }
+                ImGui::EndChild();
+
+                ImGui::Columns();
+
+                ImGui::EndTabItem();
+            }
             ImGui::EndTabBar();
         };
         ImGui::End();
@@ -1547,10 +1603,8 @@ bool Cheat::Init(HINSTANCE _hinstDLL)
     }
     Hacks::Init();
 
-#ifdef STEAM
     auto t = CreateThread(nullptr, 0, reinterpret_cast<LPTHREAD_START_ROUTINE>(ClearingThread), nullptr, 0, nullptr);
     if (t) CloseHandle(t);
-#endif
 
     return true;
 }

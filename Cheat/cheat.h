@@ -37,8 +37,7 @@ private:
             EClosest,
             EFOV,
         };
-        struct {
-            bool bEnable = false;
+        struct {   
             struct {
                 bool bEnable = false;
                 bool bSkeleton = false;
@@ -84,9 +83,12 @@ private:
             } islands;
             struct {
                 bool bEnable = false;
-                bool bName = false;
                 ImVec4 textCol = { 1.f, 1.f, 1.f, 1.f };
             } items;
+            struct {
+                bool bEnable = false;
+                ImVec4 textCol = { 1.f, 1.f, 1.f, 1.f };
+            } barrels;
             struct {
                 bool bEnable = false;
                 bool bName = false;
@@ -112,7 +114,6 @@ private:
             } puzzles;
             struct {
                 bool bEnable = false;
-                bool bName = false;
                 ImVec4 textCol = { 1.f, 1.f, 1.f, 1.f };
             } shipwrecks;
             struct {
