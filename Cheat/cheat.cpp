@@ -1,20 +1,12 @@
 #include "cheat.h"
+#include "Renderer.h"
+#include "Logger.h"
+#include "Tools.h"
 #include <filesystem>
 #include <imgui/imgui_impl_dx11.h>
 #include <imgui/imgui_internal.h>
 #include <imgui/imgui_impl_win32.h>
 #include <HookLib/HookLib.h>
-
-
-#define STEAM 1
-
-#if not STEAM
-#if 0
-#define UWPDEBUG
-#endif
-#endif
-
-namespace fs = std::filesystem;
 
 void Cheat::Hacks::OnWeaponFiredHook(UINT64 arg1, UINT64 arg2)
 {
@@ -39,148 +31,6 @@ void Cheat::Hacks::Init()
 inline void Cheat::Hacks::Remove()
 {
     //RemoveHook(orig);
-}
-
-void Cheat::Renderer::Drawing::RenderText(const char* text, const FVector2D& pos, const ImVec4& color, const bool outlined = true, const bool centered = true)
-{
-    if (!text) return;
-    auto ImScreen = *reinterpret_cast<const ImVec2*>(&pos);
-    if (centered)
-    {
-        auto size = ImGui::CalcTextSize(text);
-        ImScreen.x -= size.x * 0.5f;
-        ImScreen.y -= size.y;
-    }
-    auto window = ImGui::GetCurrentWindow();
-
-    if (outlined) { window->DrawList->AddText(nullptr, 0.f, ImVec2(ImScreen.x - 1.f, ImScreen.y + 1.f), ImGui::GetColorU32(IM_COL32_BLACK), text); }
-
-    window->DrawList->AddText(nullptr, 0.f, ImScreen, ImGui::GetColorU32(color), text);
-
-}
-
-void Cheat::Renderer::Drawing::Render2DBox(const FVector2D& top, const FVector2D& bottom, const float height, const float width, const ImVec4& color)
-{
-    ImGui::GetCurrentWindow()->DrawList->AddRect({ top.X - width * 0.5f, top.Y}, { top.X + width * 0.5f, bottom.Y }, ImGui::GetColorU32(color), 0.f, 15, 1.5f);
-}
-
-bool Cheat::Renderer::Drawing::Render3DBox(AController* const controller, const FVector& origin, const FVector& extent, const FRotator& rotation, const ImVec4& color)
-{
-    FVector vertex[2][4];
-    vertex[0][0] = { -extent.X, -extent.Y,  -extent.Z };
-    vertex[0][1] = { extent.X, -extent.Y,  -extent.Z };
-    vertex[0][2] = { extent.X, extent.Y,  -extent.Z };
-    vertex[0][3] = { - extent.X, extent.Y, -extent.Z };
-
-    vertex[1][0] = { -extent.X, -extent.Y, extent.Z };
-    vertex[1][1] = { extent.X, -extent.Y, extent.Z };
-    vertex[1][2] = { extent.X, extent.Y, extent.Z };
-    vertex[1][3] = { -extent.X, extent.Y, extent.Z };
-
-    FVector2D screen[2][4];
-    FTransform const Transform(rotation);
-    for (auto k = 0; k < 2; k++)
-    {
-        for (auto i = 0; i < 4; i++)
-        {
-            auto& vec = vertex[k][i];
-            vec = Transform.TransformPosition(vec) + origin;
-            if (!controller->ProjectWorldLocationToScreen(vec, screen[k][i])) return false;
-        }
-
-    }
-
-    auto ImScreen = reinterpret_cast<ImVec2(&)[2][4]>(screen);
-    
-    auto window = ImGui::GetCurrentWindow();
-    for (auto i = 0; i < 4; i++)
-    {
-        window->DrawList->AddLine(ImScreen[0][i], ImScreen[0][(i + 1) % 4], ImGui::GetColorU32(color));
-        window->DrawList->AddLine(ImScreen[1][i], ImScreen[1][(i + 1) % 4], ImGui::GetColorU32(color));
-        window->DrawList->AddLine(ImScreen[0][i], ImScreen[1][i], ImGui::GetColorU32(color));
-    }
-
-    return true;
-}
-
-bool Cheat::Renderer::Drawing::RenderSkeleton(AController* const controller, USkeletalMeshComponent* const mesh, const FMatrix& comp2world, const std::pair<const BYTE*, const BYTE>* skeleton, int size, const ImVec4& color)
-{
-    
-    for (auto s = 0; s < size; s++)
-    {
-        auto& bone = skeleton[s];
-        FVector2D previousBone;
-        for (auto i = 0; i < skeleton[s].second; i++)
-        {
-            FVector loc;
-            if (!mesh->GetBone(bone.first[i], comp2world, loc)) return false;
-            FVector2D screen;
-            if (!controller->ProjectWorldLocationToScreen(loc, screen)) return false;
-            if (previousBone.Size() != 0) {
-                auto ImScreen1 = *reinterpret_cast<ImVec2*>(&previousBone);
-                auto ImScreen2 = *reinterpret_cast<ImVec2*>(&screen);
-                ImGui::GetCurrentWindow()->DrawList->AddLine(ImScreen1, ImScreen2, ImGui::GetColorU32(color));
-            }
-            previousBone = screen;
-        }
-    }
-    
-    return true;
-}
-
-extern LRESULT ImGui_ImplWin32_WndProcHandler(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam);
-LRESULT WINAPI Cheat::Renderer::WndProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
-{ 
-    if (ImGui_ImplWin32_WndProcHandler(hwnd, uMsg, wParam, lParam) && bIsOpen) return true;
-    if (bIsOpen)
-    {
-        ImGuiMouseCursor imgui_cursor = ImGui::GetMouseCursor();
-        LPTSTR win32_cursor = IDC_ARROW;
-        switch (imgui_cursor)
-        {
-        case ImGuiMouseCursor_Arrow:        win32_cursor = IDC_ARROW; break;
-        case ImGuiMouseCursor_TextInput:    win32_cursor = IDC_IBEAM; break;
-        case ImGuiMouseCursor_ResizeAll:    win32_cursor = IDC_SIZEALL; break;
-        case ImGuiMouseCursor_ResizeEW:     win32_cursor = IDC_SIZEWE; break;
-        case ImGuiMouseCursor_ResizeNS:     win32_cursor = IDC_SIZENS; break;
-        case ImGuiMouseCursor_ResizeNESW:   win32_cursor = IDC_SIZENESW; break;
-        case ImGuiMouseCursor_ResizeNWSE:   win32_cursor = IDC_SIZENWSE; break;
-        case ImGuiMouseCursor_Hand:         win32_cursor = IDC_HAND; break;
-        case ImGuiMouseCursor_NotAllowed:   win32_cursor = IDC_NO; break;
-        }
-        SetCursorOriginal(LoadCursorA(nullptr, win32_cursor));
-        
-    }
-    if (!bIsOpen || uMsg == WM_KEYUP) return CallWindowProcA(WndProcOriginal, hwnd, uMsg, wParam, lParam);
-    return DefWindowProcA(hwnd, uMsg, wParam, lParam);
-}
-
-HCURSOR WINAPI Cheat::Renderer::SetCursorHook(HCURSOR hCursor)
-{
-   if (bIsOpen) return 0;
-   return SetCursorOriginal(hCursor);
-}
-
-BOOL WINAPI Cheat::Renderer::SetCursorPosHook(int X, int Y)
-{
-    if (bIsOpen) return FALSE;
-    return SetCursorPosOriginal(X, Y);
-}
-
-void Cheat::Renderer::HookInput()
-{
-    RemoveInput();
-    WndProcOriginal = reinterpret_cast<WNDPROC>(SetWindowLongPtrA(gameWindow, GWLP_WNDPROC, reinterpret_cast<LONG_PTR>(WndProc)));
-    Logger::Log("WndProcOriginal = %p\n", WndProcOriginal);
-}
-
-void Cheat::Renderer::RemoveInput()
-{
-    if (WndProcOriginal) 
-    {
-        SetWindowLongPtrA(gameWindow, GWLP_WNDPROC, reinterpret_cast<LONG_PTR>(WndProcOriginal));
-        WndProcOriginal = nullptr;
-    }
 }
 
 HRESULT Cheat::Renderer::PresentHook(IDXGISwapChain* swapChain, UINT syncInterval, UINT flags)
@@ -225,15 +75,12 @@ HRESULT Cheat::Renderer::PresentHook(IDXGISwapChain* swapChain, UINT syncInterva
             io.Fonts->AddFontFromFileTTF("C:\\Windows\\Fonts\\Arial.ttf", 16.0f, &config);
             io.IniFilename = nullptr;
         }
-#ifdef STEAM
+
         DXGI_SWAP_CHAIN_DESC desc;
         swapChain->GetDesc(&desc);
         auto& window = desc.OutputWindow;
         gameWindow = window;
-#else
-        auto window = FindWindowA("Windows.UI.Core.CoreWindow", "Sea of Thieves");
-        gameWindow = window;    
-#endif
+
         Logger::Log("gameWindow = %p\n", window);
 
         if (!ImGui_ImplWin32_Init(window)) goto cleanup;
@@ -316,6 +163,7 @@ HRESULT Cheat::Renderer::PresentHook(IDXGISwapChain* swapChain, UINT syncInterva
             aimBest.target = nullptr;
             aimBest.best = FLT_MAX;
 
+            //Loop though all the objects IN VIEWPORT
             for (auto l = 0u; l < levels.Count; l++)
             {
                 auto const level = levels[l];
@@ -450,6 +298,7 @@ HRESULT Cheat::Renderer::PresentHook(IDXGISwapChain* swapChain, UINT syncInterva
                         }
                         else {
 
+                            //Items
                             if (cfg.visuals.items.bEnable && actor->isItem()) {
 
                                 if (cfg.visuals.items.bName)
@@ -472,6 +321,9 @@ HRESULT Cheat::Renderer::PresentHook(IDXGISwapChain* swapChain, UINT syncInterva
                                 continue;
                             }
 
+                            //Barrels
+
+                            //Shipwrecks
                             else if (cfg.visuals.shipwrecks.bEnable && actor->isShipwreck())
                             {
                                 auto location = actor->K2_GetActorLocation();
@@ -486,6 +338,7 @@ HRESULT Cheat::Renderer::PresentHook(IDXGISwapChain* swapChain, UINT syncInterva
                                 continue;
                             }
 
+                            //Other Players
                             else if (cfg.visuals.players.bEnable && actor->isPlayer()  && actor != localCharacter && !actor->IsDead())
                             {
 
@@ -623,7 +476,8 @@ HRESULT Cheat::Renderer::PresentHook(IDXGISwapChain* swapChain, UINT syncInterva
                                 continue;
                             
                             }
-                       
+                            
+                            //Skeletons
                             else if (cfg.visuals.skeletons.bEnable && actor->isSkeleton() && !actor->IsDead()) {
                                 // todo: make a function to draw both skeletons and players as they are similar
                                 FVector origin, extent;
@@ -750,6 +604,7 @@ HRESULT Cheat::Renderer::PresentHook(IDXGISwapChain* swapChain, UINT syncInterva
                                 continue;
                             }
 
+                            //Animals
                             else if (cfg.visuals.animals.bEnable && actor->isAnimal())
                             {
                                 FVector origin, extent;
@@ -808,6 +663,7 @@ HRESULT Cheat::Renderer::PresentHook(IDXGISwapChain* swapChain, UINT syncInterva
                                 continue;
                             }
                             
+                            //Sharks
                             else if (cfg.visuals.sharks.bEnable && actor->isShark())
                             {
                                 FVector origin, extent;
@@ -870,6 +726,7 @@ HRESULT Cheat::Renderer::PresentHook(IDXGISwapChain* swapChain, UINT syncInterva
                                 continue;
                             }
                             
+                            //Ships
                             else if (cfg.visuals.ships.bEnable)
                             {
                                 if (actor->isShip()) 
@@ -952,6 +809,7 @@ HRESULT Cheat::Renderer::PresentHook(IDXGISwapChain* swapChain, UINT syncInterva
                                 }
                             }
                             
+                            //Puzzle
                             if (cfg.visuals.puzzles.bEnable && actor->isPuzzleVault())
                             {
                                 auto vault = reinterpret_cast<APuzzleVault*>(actor);
@@ -973,9 +831,10 @@ HRESULT Cheat::Renderer::PresentHook(IDXGISwapChain* swapChain, UINT syncInterva
                 }
             }
             
+            //No matter if in Viewport or not
             if (cfg.visuals.bEnable)
             {
-
+                //Islands
                 if (cfg.visuals.islands.bEnable)
                 {
                     if (cfg.visuals.islands.bName)
@@ -1006,24 +865,22 @@ HRESULT Cheat::Renderer::PresentHook(IDXGISwapChain* swapChain, UINT syncInterva
                                     
                                     snprintf(name + len, sizeof(name) - len, " [%d]", dist);
                                     Drawing::RenderText(name, screen, cfg.visuals.islands.textCol);
-                                    
-                                    
+
                                 }
-                                
                             }
 
                         } while (false);
-                    
-                        
                     }
                 }
                 
+                //Crosshair
                 if (cfg.visuals.client.bCrosshair)
                 {
                     drawList->AddLine({ io.DisplaySize.x * 0.5f - cfg.visuals.client.fCrosshair, io.DisplaySize.y * 0.5f }, { io.DisplaySize.x * 0.5f + cfg.visuals.client.fCrosshair, io.DisplaySize.y * 0.5f }, ImGui::GetColorU32(cfg.visuals.client.crosshairColor));
                     drawList->AddLine({ io.DisplaySize.x * 0.5f, io.DisplaySize.y * 0.5f - cfg.visuals.client.fCrosshair }, { io.DisplaySize.x * 0.5f, io.DisplaySize.y * 0.5f + cfg.visuals.client.fCrosshair }, ImGui::GetColorU32(cfg.visuals.client.crosshairColor));
                 }
 
+                //Oxygen
                 if (cfg.visuals.client.bOxygen && localCharacter->IsInWater())
                 {
                     auto drownComp = localCharacter->DrowningComponent;
@@ -1037,6 +894,7 @@ HRESULT Cheat::Renderer::PresentHook(IDXGISwapChain* swapChain, UINT syncInterva
                     drawList->AddRectFilled({ posX - barWidth2, posY - barHeight2 }, { posX - barWidth2 + barWidth2 * level * 2.f, posY + barHeight2 }, ImGui::GetColorU32(IM_COL32(0, 200, 255, 255)));
                 }
 
+                //Compass
                 if (cfg.visuals.client.bCompass)
                 {
 
@@ -1226,7 +1084,6 @@ HRESULT Cheat::Renderer::PresentHook(IDXGISwapChain* swapChain, UINT syncInterva
                 }
             }
 
-            
         } while (false);
     }
     catch (...) 
@@ -1238,16 +1095,8 @@ HRESULT Cheat::Renderer::PresentHook(IDXGISwapChain* swapChain, UINT syncInterva
     ImGui::End();
     ImGui::PopStyleColor();
     ImGui::PopStyleVar(2);
-
     
-    
-#ifdef STEAM
     if (ImGui::IsKeyPressed(VK_INSERT)) bIsOpen = !bIsOpen;
-#else
-    // if you would like to have full input in UWP version: reverse game and find array of key states (see: https://github.com/MICROSOFT-XBOX-ATG/MICROSOFT_UWP_UNREAL/blob/release_uwp/Engine/Source/Runtime/ApplicationCore/Private/UWP/UWPInputInterface.cpp#L9). 
-    static const FKey insert("Insert");
-    if (cache.localController && cache.localController->WasInputKeyJustPressed(insert)) { bIsOpen = !bIsOpen; } // todo: change this shit
-#endif
 
     if (bIsOpen) {
         ImGui::SetNextWindowSize(ImVec2(io.DisplaySize.x * 0.5f, io.DisplaySize.y * 0.7f), ImGuiCond_Once);
@@ -1655,228 +1504,6 @@ HRESULT Cheat::Renderer::ResizeHook(IDXGISwapChain* swapChain, UINT bufferCount,
     return ResizeOriginal(swapChain, bufferCount, width, height, newFormat, swapChainFlags);
 }
 
-
-inline bool Cheat::Renderer::Init()
-{
-    HMODULE dxgi = GetModuleHandleA("dxgi.dll");
-    Logger::Log("dxgi: %p\n", dxgi);
-    static BYTE PresentSig[] = { 0x55, 0x57, 0x41, 0x56, 0x48, 0x8d, 0x6c, 0x24, 0x90, 0x48, 0x81, 0xec, 0x70, 0x01 };
-    //static BYTE PresentHead[] = { 0x48, 0x89, 0x5c, 0x24, 0x10 };
-    //BYTE* fnPresent = Tools::PacthFn(dxgi, PresentSig, sizeof(PresentSig), PresentHead, sizeof(PresentHead));
-    fnPresent = reinterpret_cast<decltype(fnPresent)>(Tools::FindFn(dxgi, PresentSig, sizeof(PresentSig)));
-    Logger::Log("IDXGISwapChain::Present: %p\n", fnPresent);
-    if (!fnPresent) return false;
-    
-
-    static BYTE ResizeSig[] = { 0x48, 0x81, 0xec, 0xc0, 0x00, 0x00, 0x00, 0x48, 0xc7, 0x45, 0x1f };
-    //static BYTE ResizeHead[] = { 0x48, 0x8b, 0xc4, 0x55, 0x41, 0x54 };  
-    //BYTE* fnResize = Tools::PacthFn(dxgi, ResizeSig, sizeof(ResizeSig), ResizeHead, sizeof(ResizeHead));
-    fnResize = reinterpret_cast<decltype(fnResize)>(Tools::FindFn(dxgi, ResizeSig, sizeof(ResizeSig)));
-    Logger::Log("IDXGISwapChain::ResizeBuffers: %p\n", fnResize);
-    if (!fnResize) return false;
-    
-
-    if (!SetHook(fnPresent, PresentHook, reinterpret_cast<void**>(&PresentOriginal)))
-    {
-        return false;
-    };
-
-    Logger::Log("PresentHook: %p\n", PresentHook);
-    Logger::Log("PresentOriginal: %p\n", PresentOriginal);
-
-    if (!SetHook(fnResize, ResizeHook, reinterpret_cast<void**>(&ResizeOriginal)))
-    {
-        return false;
-    };
-
-    Logger::Log("ResizeHook: %p\n", ResizeHook);
-    Logger::Log("ResizeOriginal: %p\n", ResizeOriginal);
-
-    if (!SetHook(SetCursorPos, SetCursorPosHook, reinterpret_cast<void**>(&SetCursorPosOriginal)))
-    {
-        Logger::Log("Can't hook SetCursorPos\n");
-        return false;
-    };
-
-    if (!SetHook(SetCursor, SetCursorHook, reinterpret_cast<void**>(&SetCursorOriginal)))
-    {
-        Logger::Log("Can't hook SetCursor\n");
-        return false;
-    };
-
-    return true;
-}
-
-inline bool Cheat::Renderer::Remove()
-{
-    Renderer::RemoveInput(); 
-    if (!RemoveHook(PresentOriginal) || !RemoveHook(ResizeOriginal) || !RemoveHook(SetCursorPosOriginal) || !RemoveHook(SetCursorOriginal))
-    {
-        return false;
-    }
-    if (renderTargetView)
-    {
-        ImGui_ImplDX11_Shutdown();
-        ImGui::DestroyContext();
-        renderTargetView->Release();
-        renderTargetView = nullptr;
-    }
-    if (context)
-    {
-        context->Release();
-        context = nullptr;
-    }
-    if (device)
-    {
-        device->Release();
-        device = nullptr;
-    }
-    return true;
-}
-
-inline bool Cheat::Tools::CompareByteArray(BYTE* data, BYTE* sig, SIZE_T size)
-{
-    for (SIZE_T i = 0; i < size; i++) {
-        if (data[i] != sig[i]) {
-            if (sig[i] == 0x00) continue;
-            return false;
-        }
-    }
-    return true;
-}
-
-inline BYTE* Cheat::Tools::FindSignature(BYTE* start, BYTE* end, BYTE* sig, SIZE_T size)
-{
-    for (BYTE* it = start; it < end - size; it++) {
-        if (CompareByteArray(it, sig, size)) {
-            return it;
-        };
-    }
-    return 0;
-}
-
-void* Cheat::Tools::FindPointer(BYTE* sig, SIZE_T size, int addition = 0)
-{
-    auto base = static_cast<BYTE*>(gBaseMod.lpBaseOfDll);
-    auto address = FindSignature(base, base + gBaseMod.SizeOfImage - 1, sig, size);
-    if (!address) return nullptr;
-    auto k = 0;
-    for (; sig[k]; k++);
-    auto offset = *reinterpret_cast<UINT32*>(address + k);
-    return address + k + 4 + offset + addition;
-}
-
-inline BYTE* Cheat::Tools::FindFn(HMODULE mod, BYTE* sig, SIZE_T sigSize)
-{
-    if (!mod || !sig || !sigSize) return 0;
-    MODULEINFO modInfo;
-    if (!K32GetModuleInformation(GetCurrentProcess(), mod, &modInfo, sizeof(MODULEINFO))) return 0;
-    auto base = static_cast<BYTE*>(modInfo.lpBaseOfDll);
-    auto fn = Tools::FindSignature(base, base + modInfo.SizeOfImage - 1, sig, sigSize);
-    if (!fn) return 0;
-    for (; *fn != 0xCC && *fn != 0xC3; fn--);
-    fn++;
-    return fn;
-}
-
-inline bool Cheat::Tools::PatchMem(void* address, void* bytes, SIZE_T size)
-{
-    DWORD oldProtection;
-    if (VirtualProtect(address, size, PAGE_EXECUTE_READWRITE, &oldProtection))
-    {
-        memcpy(address, bytes, size);
-        return VirtualProtect(address, size, oldProtection, &oldProtection);
-    };
-    return false;
-}
-
-/*inline bool Cheat::Tools::HookVT(void** vtable, UINT64 index, void* FuncH, void** FuncO)
-{
-    if (!vtable || !FuncH || !vtable[index]) return false;
-    if (FuncO) { *FuncO = vtable[index]; }
-    PatchMem(&vtable[index], &FuncH, 8);
-    return FuncH == vtable[index];
-}*/
-
-inline BYTE* Cheat::Tools::PacthFn(HMODULE mod, BYTE* sig, SIZE_T sigSize, BYTE* bytes, SIZE_T bytesSize)
-{
-    if (!mod || !sig || !sigSize || !bytes || !bytesSize) return 0;
-    auto fn = FindFn(mod, sig, sigSize);
-    if (!fn) return 0;
-    return Tools::PatchMem(fn, bytes, bytesSize) ? fn : 0;
-}
-
-inline bool Cheat::Tools::FindNameArray()
-{
-    static BYTE sig[] = { 0x48, 0x8b, 0x3d, 0x00, 0x00, 0x00, 0x00, 0x48, 0x85, 0xff, 0x75, 0x3c };
-    auto address = reinterpret_cast<decltype(FName::GNames)*>(FindPointer(sig, sizeof(sig)));
-    if (!address) return 0;
-    Logger::Log("%p\n", address);
-    FName::GNames = *address;
-    return FName::GNames;
-}
-
-inline bool Cheat::Tools::FindObjectsArray()
-{
-    static BYTE sig[] = { 0x89, 0x0D, 0x00, 0x00, 0x00, 0x00, 0x48, 0x8B, 0xDF, 0x48, 0x89, 0x5C, 0x24 };
-    UObject::GObjects = reinterpret_cast<decltype(UObject::GObjects)>(FindPointer(sig, sizeof(sig), 16));
-    return UObject::GObjects;
-}
-
-inline bool Cheat::Tools::FindWorld()
-{
-    static BYTE sig[] = { 0x48, 0x8B, 0x05, 0x00, 0x00, 0x00, 0x00, 0x48, 0x8B, 0x88, 0x00, 0x00, 0x00, 0x00, 0x48, 0x85, 0xC9, 0x74, 0x06, 0x48, 0x8B, 0x49, 0x70 };
-    UWorld::GWorld = reinterpret_cast<decltype(UWorld::GWorld)>(FindPointer(sig, sizeof(sig)));
-    return UWorld::GWorld;
-}
-
-inline bool Cheat::Tools::InitSDK()
-{
-    if (!UCrewFunctions::Init()) return false;
-    if (!UKismetMathLibrary::Init()) return false;
-    return true;
-}
-
-inline bool Cheat::Logger::Init()
-{
-    fs::path log;
-#ifdef STEAM
-    wchar_t buf[MAX_PATH];
-    if (!GetModuleFileNameW(hinstDLL, buf, MAX_PATH)) return false;
-    log = fs::path(buf).remove_filename() / "log.txt";
-#else
-#ifdef UWPDEBUG
-    log = "C:\\Users\\dimae\\AppData\\Local\\Packages\\Microsoft.SeaofThieves_8wekyb3d8bbwe\\TempState\\log.txt";
-#else
-    return true;
-#endif
-#endif
-    file = CreateFileW(log.wstring().c_str(), GENERIC_WRITE, FILE_SHARE_READ, NULL, CREATE_ALWAYS, FILE_ATTRIBUTE_NORMAL, NULL);
-    return file != INVALID_HANDLE_VALUE;
-}
-
-inline bool Cheat::Logger::Remove()
-{
-    if (!file) return true;
-    return CloseHandle(file);
-}
-
-void Cheat::Logger::Log(const char* format, ...)
-{
-#if defined STEAM || defined UWPDEBUG
-    SYSTEMTIME rawtime;
-    GetSystemTime(&rawtime);
-    char buf[MAX_PATH];
-    auto size = GetTimeFormatA(LOCALE_CUSTOM_DEFAULT, 0, &rawtime, "[HH':'mm':'ss] ", buf, MAX_PATH) - 1;
-    size += snprintf(buf + size, sizeof(buf) - size, "[TID: 0x%X] ", GetCurrentThreadId());
-    va_list argptr;
-    va_start(argptr, format);
-    size += vsnprintf(buf + size, sizeof(buf) - size, format, argptr);
-    WriteFile(file, buf, size, NULL, NULL);
-    va_end(argptr);
-#endif
-}
-
 bool Cheat::Init(HINSTANCE _hinstDLL)
 {
     hinstDLL = _hinstDLL;
@@ -1959,7 +1586,6 @@ bool Cheat::Remove()
 
     Hacks::Remove();
 
-    //Hacks::Remove();
 
     // some other stuff...
 
