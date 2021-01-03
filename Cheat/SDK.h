@@ -904,6 +904,11 @@ public:
 		return IsA(obj);
 	}
 
+	inline bool isCannon() {
+		static auto obj = UObject::FindClass("Class Athena.Cannon");
+		return IsA(obj);
+	}
+
 	inline bool isFarShip() {
 		static auto obj = UObject::FindClass("Class Athena.ShipNetProxy");
 		return IsA(obj);

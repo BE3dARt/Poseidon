@@ -2,6 +2,7 @@
 #include "Renderer.h"
 #include "Logger.h"
 #include "Tools.h"
+#include "AimHelp.h"
 #include <filesystem>
 #include <imgui/imgui_impl_dx11.h>
 #include <imgui/imgui_internal.h>
@@ -143,7 +144,8 @@ HRESULT Cheat::Renderer::PresentHook(IDXGISwapChain* swapChain, UINT syncInterva
 
            // check isWieldedWeapon before accessing!
            auto const localWeapon = *reinterpret_cast<AProjectileWeapon**>(&item);
-           ACharacter* attachObject = localCharacter->GetAttachParentActor();;
+           ACharacter* attachObject = localCharacter->GetAttachParentActor();
+
            bool isHarpoon = false;
            if (attachObject)
            {
@@ -190,10 +192,14 @@ HRESULT Cheat::Renderer::PresentHook(IDXGISwapChain* swapChain, UINT syncInterva
                                     float dist = cameraLoc.DistTo(location);
                                     if (dist > 7500.f || dist < 260.f) { break; }
 
+                                    //Only Visible
                                     if (cfg.aim.harpoon.bVisibleOnly) if (!localController->LineOfSightTo(actor, cameraLoc, false)) { break; }
+
                                     auto harpoon = reinterpret_cast<AHarpoonLauncher*>(attachObject);
                                     auto center = UKismetMathLibrary::NormalizedDeltaRotator(cameraRot, harpoon->rotation);
+
                                     FRotator delta = UKismetMathLibrary::NormalizedDeltaRotator(UKismetMathLibrary::FindLookAtRotation(cameraLoc, location), center);
+
                                     if (delta.Pitch < -35.f || delta.Pitch > 67.f || abs(delta.Yaw) > 50.f) { break; }
                                     FRotator diff = delta - harpoon->rotation;
                                     float absPitch = abs(diff.Pitch);
@@ -211,76 +217,6 @@ HRESULT Cheat::Renderer::PresentHook(IDXGISwapChain* swapChain, UINT syncInterva
                                 } while (false);
                             }
                         }
-                        //Aimbot for FPS Weapons
-                        else if (!attachObject && isWieldedWeapon)
-                        {
-                            if (cfg.aim.players.bEnable && actor->isPlayer() && actor != localCharacter && !actor->IsDead())
-                            {
-                                do {
-
-                                    FVector playerLoc = actor->K2_GetActorLocation();
-                                    float dist = localLoc.DistTo(playerLoc);
-                                    if (dist > localWeapon->WeaponParameters.ProjectileMaximumRange) { break; }
-
-                                    if (cfg.aim.players.bVisibleOnly) if (!localController->LineOfSightTo(actor, cameraLoc, false)) { break; }
-                                    if (!cfg.aim.players.bTeam) if (UCrewFunctions::AreCharactersInSameCrew(actor, localCharacter)) break;
-
-                                    FRotator rotationDelta = UKismetMathLibrary::NormalizedDeltaRotator(UKismetMathLibrary::FindLookAtRotation(cameraLoc, playerLoc), cameraRot);
-
-                                    float absYaw = abs(rotationDelta.Yaw);
-                                    float absPitch = abs(rotationDelta.Pitch);
-                                    if (absYaw > cfg.aim.players.fYaw || absPitch > cfg.aim.players.fPitch) { break; }
-                                    float sum = absYaw + absPitch;
-
-                                    if (sum < aimBest.best)
-                                    {
-                                        aimBest.target = actor;
-                                        aimBest.location = playerLoc;
-                                        aimBest.delta = rotationDelta;
-                                        aimBest.best = sum;
-                                        aimBest.smoothness = cfg.aim.players.fSmoothness;
-                                    }
-
-                                } while (false);
-                            }
-                            else if (cfg.aim.skeletons.bEnable && actor->isSkeleton() && !actor->IsDead())
-                            {
-                                do {
-                                    //Get Distance to Target
-                                    const FVector playerLoc = actor->K2_GetActorLocation();
-                                    const float dist = localLoc.DistTo(playerLoc);
-
-                                    //Exit if further than maximal range
-                                    if (dist > localWeapon->WeaponParameters.ProjectileMaximumRange) break;
-
-                                    //Exit if target is not visible
-                                    if (cfg.aim.skeletons.bVisibleOnly) {
-                                        if (!localController->LineOfSightTo(actor, cameraLoc, false)) {
-                                            break;
-                                        }
-                                    }
-                                    
-                                    //Find a rotation for an object at Start location to point at Target location.
-                                    const FRotator rotationDelta = UKismetMathLibrary::NormalizedDeltaRotator(UKismetMathLibrary::FindLookAtRotation(cameraLoc, playerLoc), cameraRot);
-                                    const float absYaw = abs(rotationDelta.Yaw);
-                                    const float absPitch = abs(rotationDelta.Pitch);
-
-                                    if (absYaw > cfg.aim.skeletons.fYaw || absPitch > cfg.aim.skeletons.fPitch) break;
-                                    const float sum = absYaw + absPitch;
-
-                                    if (sum < aimBest.best)
-                                    {
-                                        aimBest.target = actor;
-                                        aimBest.location = playerLoc;
-                                        aimBest.delta = rotationDelta;
-                                        aimBest.best = sum;
-                                        aimBest.smoothness = cfg.aim.skeletons.fSmoothness;
-                                    }
-
-                                } while (false);
-                            }
-                        }
-                        
                     }
                     
                     if (cfg.visuals.client.bDebug)
@@ -531,19 +467,6 @@ HRESULT Cheat::Renderer::PresentHook(IDXGISwapChain* swapChain, UINT syncInterva
 
                                 const FMatrix comp2world = mesh->K2_GetComponentToWorld().ToMatrixWithScale();
 
-                                /*for (auto i = 0; i < 122; i++)
-                                {
-                                    FVector pos;
-                                    if (mesh->GetBone(i, comp2world, pos))
-                                    {
-                                        FVector2D screen;
-                                        if (!localController->ProjectWorldLocationToScreen(pos, screen)) continue;
-                                        char text[0x30];
-                                        auto len = sprintf_s(text, "%d", i);
-                                        Drawing::RenderText(text, screen, ImVec4(1.f, 1.f, 1.f, 1.f));
-                                    };
-                                }*/
-
                                 if (!Drawing::RenderSkeleton(localController, mesh, comp2world, skeleton, 5, col)) continue;
 
 
@@ -623,81 +546,15 @@ HRESULT Cheat::Renderer::PresentHook(IDXGISwapChain* swapChain, UINT syncInterva
                         }
 
                         //Animals
-                        //Versuchskaninchen
-                        else if (cfg.visuals.animals.bEnable && actor->isAnimal())
-                        {
-
-                            float velocity = 60.5f;
-
-                            FVector origin, extent;
-                            actor->GetActorBounds(true, origin, extent);
-
-                            FVector2D headPos;
-                            if (!localController->ProjectWorldLocationToScreen({ origin.X, origin.Y, origin.Z + extent.Z }, headPos)) continue;
-                            FVector2D footPos;
-                            if (!localController->ProjectWorldLocationToScreen({ origin.X, origin.Y, origin.Z + extent.Z }, footPos)) continue;
-
-                            float height = abs(footPos.Y - headPos.Y);
-                            float width = height * 0.6f;
-
-                            bool bVisible = localController->LineOfSightTo(actor, cameraLoc, false);
-                            ImVec4 col = bVisible ? cfg.visuals.animals.colorVis : cfg.visuals.animals.colorInv;
-
-                            auto displayName = reinterpret_cast<AFauna*>(actor)->DisplayName;
-
-                            const int dist = localLoc.DistTo(origin) * 0.01f;
-                            char name[0x64];
-                            const int len = displayName->multi(name, 0x50);
-                            snprintf(name + len, sizeof(name) - len, " [%d]", dist);
-                            const float adjust = height * 0.05f;
-                            FVector2D pos = { headPos.X, headPos.Y - adjust };
-                            Drawing::RenderText(name, pos, cfg.visuals.animals.textCol);
-
-                            float angle = ((asin(((float)dist * 9.81f) / (60.5f * 60.5f))) * (float)180.f / 3.141592653589f) / 2;
-                            float deltaZ = (float)dist * (sin((angle * 3.141592653589f / (float)180.f))) * 100;
-
-                            FVector2D headPosALT;
-                            if (!localController->ProjectWorldLocationToScreen({ origin.X, origin.Y, ((origin.Z + extent.Z) + deltaZ) }, headPos)) continue;
-                            FVector2D footPosALT;
-                            if (!localController->ProjectWorldLocationToScreen({ origin.X, origin.Y, ((origin.Z + extent.Z) + deltaZ) }, footPos)) continue;
-
-                            switch (cfg.visuals.animals.boxType)
-                            {
-                                case Config::EBox::E2DBoxes:
-                                {
-                                    Drawing::Render2DBox(headPos, footPos, height, width, col);
-                                    break;
-                                }
-                                case Config::EBox::E3DBoxes:
-                                {
-                                    FRotator rotation = actor->K2_GetActorRotation();
-                                    FVector ext = { 40.f, 40.f, extent.Z };
-                                    if (!Drawing::Render3DBox(localController, origin, ext, rotation, col)) continue;
-                                    break;
-                                }
-                                /*
-                                case Config::EBox::EDebugBoxes:
-                                {
-                                    FVector ext = { 40.f, 40.f, extent.Z };
-                                    UKismetMathLibrary::DrawDebugBox(actor, origin, ext, *reinterpret_cast<const FLinearColor*>(&col), actor->K2_GetActorRotation(), 0.0f);
-                                    break;
-                                }
-                                 */
+                        else if (cfg.visuals.animals.bEnable && actor->isAnimal()) {
+                            
+                            if (cfg.visuals.cannon.bAimHelp) {
+                                DisplayAimHelper(localController, actor, cameraLoc, cfg.visuals.animals.colorVis, cfg.visuals.animals.colorInv, cfg.visuals.animals.textCol, localLoc, cfg.visuals.animals.boxType, true);
                             }
-
-                            /*
-                            auto displayName = reinterpret_cast<AFauna*>(actor)->DisplayName;
-                            if (displayName) {
-                                const int dist = localLoc.DistTo(origin) * 0.01f;
-                                char name[0x64];
-                                const int len = displayName->multi(name, 0x50);
-                                snprintf(name + len, sizeof(name) - len, " [%d]", dist);
-                                const float adjust = height * 0.05f;
-                                FVector2D pos = { headPos.X, headPos.Y - adjust };
-                                Drawing::RenderText(name, pos, cfg.visuals.animals.textCol);
+                            else {
+                                DisplayAimHelper(localController, actor, cameraLoc, cfg.visuals.animals.colorVis, cfg.visuals.animals.colorInv, cfg.visuals.animals.textCol, localLoc, cfg.visuals.animals.boxType, false);
+                                
                             }
-                            */
-
                             continue;
                         }
 
@@ -756,11 +613,22 @@ HRESULT Cheat::Renderer::PresentHook(IDXGISwapChain* swapChain, UINT syncInterva
                         }
 
                         //Ship
+                        //Ship Functions
+                        //Function Athena.ShipServiceInterface.GetCrewFromShip
+                        //Function Athena.Ship.GetCharacterShipRegion
+                        //Function Athena.Ship.GetCurrentVelocity 
+                        //Function Athena.Ship.GetDeckSurfaceWater
+                        //Function Athena.Ship.GetHullDamage
+                        //Function Athena.Ship.GetInternalWater 
+                        //Function Athena.Ship.GetShipLocatorPosition 
+                        //Function Athena.Ship.GetShipRegion 
+                        //Function Athena.ShipService.GetNumShips 
                         else if (actor->isShip() && (cfg.visuals.ships.bName || cfg.visuals.ships.bDamage))
                         {
                             const FVector location = actor->K2_GetActorLocation();
                             const int dist = localLoc.DistTo(location) * 0.01f;
 
+                            //Show Name + Water 
                             if (cfg.visuals.ships.bName && dist <= 1500)
                             {
                                 FVector2D screen;
@@ -774,6 +642,7 @@ HRESULT Cheat::Renderer::PresentHook(IDXGISwapChain* swapChain, UINT syncInterva
                                 };
                             }
 
+                            //Show Holes
                             if (cfg.visuals.ships.bDamage && dist <= 300)
                             {
                                 auto const damage = actor->GetHullDamage();
@@ -804,15 +673,6 @@ HRESULT Cheat::Renderer::PresentHook(IDXGISwapChain* swapChain, UINT syncInterva
                                 if (!Drawing::Render3DBox(localController, origin, extent, rotation, cfg.visuals.ships.boxColor)) continue;
                                 break;
                             }
-                            /*
-                            case Config::EBox::EDebugBoxes:
-                            {
-                                FVector origin, extent;
-                                actor->GetActorBounds(true, origin, extent);
-                                UKismetMathLibrary::DrawDebugBox(reinterpret_cast<UObject*>(world), origin, extent, *reinterpret_cast<const FLinearColor*>(&cfg.visuals.ships.boxColor), actor->K2_GetActorRotation(), 0.f);
-                                break;
-                            }
-                            */
                             }
 
                             continue;
@@ -953,7 +813,8 @@ HRESULT Cheat::Renderer::PresentHook(IDXGISwapChain* swapChain, UINT syncInterva
                     
                     if (isHarpoon)
                     {
-                        reinterpret_cast<AHarpoonLauncher*>(attachObject)->rotation = aimBest.delta;
+                        //Turns the Harpoon I guess
+                        //reinterpret_cast<AHarpoonLauncher*>(attachObject)->rotation = aimBest.delta;
                     }
                     else {
                         /*
@@ -964,10 +825,16 @@ HRESULT Cheat::Renderer::PresentHook(IDXGISwapChain* swapChain, UINT syncInterva
                         * RL - Relative local location
                         */
                         FVector LV = localCharacter->GetVelocity();
-                        if (auto const localShip = localCharacter->GetCurrentShip()) LV += localShip->GetVelocity();
+                        if (auto const localShip = localCharacter->GetCurrentShip()) {
+                            LV += localShip->GetVelocity();
+                        }
+
                         FVector TV = aimBest.target->GetVelocity();
-                        if (auto const targetShip = aimBest.target->GetCurrentShip()) TV += targetShip->GetVelocity();
-                        const FVector RV = TV - LV;
+                        if (auto const targetShip = aimBest.target->GetCurrentShip()) {
+                            TV += targetShip->GetVelocity();
+                        }
+
+                        const FVector RV = TV - LV; //Target relative velocity
                         const float BS = localWeapon->WeaponParameters.AmmoParams.Velocity;
                         const FVector RL = localLoc - aimBest.location;
                         const float a = RV.Size() - BS * BS;
@@ -984,8 +851,8 @@ HRESULT Cheat::Renderer::PresentHook(IDXGISwapChain* swapChain, UINT syncInterva
 
                             aimBest.delta = UKismetMathLibrary::NormalizedDeltaRotator(UKismetMathLibrary::FindLookAtRotation(cameraLoc, aimBest.location), cameraRot);
                             auto smoothness = 1.f / aimBest.smoothness;
-                            localController->AddYawInput(aimBest.delta.Yaw* smoothness);
-                            localController->AddPitchInput(aimBest.delta.Pitch * -smoothness);
+                            //localController->AddYawInput(aimBest.delta.Yaw* smoothness);
+                            //localController->AddPitchInput(aimBest.delta.Pitch * -smoothness);
                         }
 
                     }
@@ -1113,21 +980,13 @@ HRESULT Cheat::Renderer::PresentHook(IDXGISwapChain* swapChain, UINT syncInterva
         Logger::Log(thros);
     }
 
-    /*
-    catch (...) 
-    {
-        // todo: somehow get the address where the error occurred
-        Logger::Log("Exception\n");
-    }
-
-    */
-
     ImGui::End();
     ImGui::PopStyleColor();
     ImGui::PopStyleVar(2);
     
     if (ImGui::IsKeyPressed(VK_INSERT)) bIsOpen = !bIsOpen;
 
+    //Actual GUI
     if (bIsOpen) {
         ImGui::SetNextWindowSize(ImVec2(io.DisplaySize.x * 0.3f, io.DisplaySize.y * 0.8f), ImGuiCond_Once);
         ImGui::Begin("Menu", 0, ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_NoTitleBar);
@@ -1169,7 +1028,7 @@ HRESULT Cheat::Renderer::PresentHook(IDXGISwapChain* swapChain, UINT syncInterva
                 //ImGui::NextColumn();
 
                 ImGui::Text("Other");
-                if (ImGui::BeginChild("Other", ImVec2(0.f, 196.f), true, 0)) {
+                if (ImGui::BeginChild("Other", ImVec2(0.f, 224.f), true, 0)) {
                     ImGui::Checkbox("Show Islands", &cfg.visuals.islands.bEnable);
                     ImGui::Checkbox("Show Items", &cfg.visuals.items.bEnable);
                     ImGui::Checkbox("Show Barrels", &cfg.visuals.barrels.bEnable);
@@ -1178,6 +1037,7 @@ HRESULT Cheat::Renderer::PresentHook(IDXGISwapChain* swapChain, UINT syncInterva
                     //ImGui::Checkbox("Draw Shark Skeleton", &cfg.visuals.sharks.bSkeleton);
                     ImGui::Checkbox("Show Sharks", &cfg.visuals.sharks.bEnable);
                     ImGui::Checkbox("Show Puzzle Doors", &cfg.visuals.puzzles.bEnable);
+                    ImGui::Checkbox("Show Cannon Aim Helper", &cfg.visuals.cannon.bAimHelp);
                 }
                 ImGui::EndChild();
 

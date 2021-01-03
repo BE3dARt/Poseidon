@@ -79,7 +79,9 @@
     <ClCompile Include="SDK.cpp" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="AimHelp.h" />
     <ClInclude Include="cheat.h" />
+    <ClInclude Include="Depricated.h" />
     <ClInclude Include="Logger.h" />
     <ClInclude Include="Renderer.h" />
     <ClInclude Include="SDK.h" />

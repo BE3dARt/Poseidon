@@ -6,7 +6,7 @@
 #include "SDK.h"
 
 class Cheat {
-private:
+public:
     static inline struct Cache{
         AController* localController;
         APlayerCameraManager* localCamera;
@@ -89,6 +89,10 @@ private:
                 bool bEnable = false;
                 ImVec4 textCol = { 1.f, 1.f, 1.f, 1.f };
             } barrels;
+            struct {
+                bool bAimHelp = false;
+                ImVec4 textCol = { 1.f, 1.f, 1.f, 1.f };
+            } cannon;
             struct {
                 bool bEnable = false;
                 bool bName = false;
@@ -184,7 +188,7 @@ private:
         static inline void Remove();
     };
     class Renderer {
-	private:
+	public:
 		struct Drawing {
 			static void RenderText(const char* text, const FVector2D& pos, const ImVec4& color, const bool outlined, const bool centered);
 			static void Render2DBox(const FVector2D& top, const FVector2D& bottom, const float height, const float width, const ImVec4& color);

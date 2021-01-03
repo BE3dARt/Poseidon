@@ -61,5 +61,11 @@
     <ClInclude Include="Tools.h">
       <Filter>Headers</Filter>
     </ClInclude>
+    <ClInclude Include="AimHelp.h">
+      <Filter>Headers</Filter>
+    </ClInclude>
+    <ClInclude Include="Depricated.h">
+      <Filter>Headers</Filter>
+    </ClInclude>
   </ItemGroup>
 </Project>
