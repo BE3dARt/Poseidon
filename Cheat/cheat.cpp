@@ -720,7 +720,7 @@ HRESULT Cheat::Renderer::PresentHook(IDXGISwapChain* swapChain, UINT syncInterva
                 }
             }
 
-            //Islands (MAYBE BROKE)
+            //Islands (BROKE)
             if (cfg.visuals.islands.bEnable)
             {
                 do {

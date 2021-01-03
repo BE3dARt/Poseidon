@@ -74,11 +74,11 @@ bool DisplayAimHelper(AController * const localController, ACharacter* const act
 
 }
 
+ACharacter* test = nullptr;
+float deviationFromCenterMin = 10000;
+
 //Check if given actor is in center of screen
 bool IsInFrontofMe(AController* const localController, ACharacter* const actor, ImVec4 colorText) {
-
-    //Screensize x: 1920
-    //Screensize y: 1080
 
     float Screensize[2] = { 1920, 1080 };
 
@@ -89,11 +89,53 @@ bool IsInFrontofMe(AController* const localController, ACharacter* const actor, 
     if (!localController->ProjectWorldLocationToScreen({ origin.X, origin.Y, origin.Z + extent.Z }, center)) {
         return false;
     }
-
+    
+    /*
+    //Make active when in center of screen (Multiple Targets possible)
     if (center.X >= (Screensize[0] / 6) * 2 && center.X <= (Screensize[0] / 6) * 4 && center.Y >= (Screensize[1] / 4) * 1 && center.Y <= (Screensize[1] / 4) * 3)
     {
         char name[0x64];
         sprintf_s(name, "Center: [%f], [%f]", center.X, center.Y);
         Cheat::Renderer::Drawing::RenderText(name, center, colorText);
     }
+    */
+
+    //1 Abweichung zur Mitte berechnen
+    float deviation[2] = { abs(center.X - (Screensize[0] / 2)), abs(center.Y - (Screensize[1] / 2)) };
+
+    //Distance zur Mitte berechnen (Satz des Pythagoras)
+    float distance = sqrt((deviation[0] * deviation[0]) + (deviation[1] * deviation[1]));
+
+    if (test != nullptr)
+    {
+        if (test == actor)
+        {
+            deviationFromCenterMin = distance;
+        }
+        else
+        {
+
+            if (deviationFromCenterMin > distance)
+            {
+                test = actor;
+                deviationFromCenterMin = distance;
+            }
+            else
+            {
+                return false;
+            }
+        }
+
+        char name[0x64];
+        sprintf_s(name, "Distance: [%f]", distance);
+        Cheat::Renderer::Drawing::RenderText(name, center, colorText);
+    }
+    else
+    {
+        test = actor;
+    }
+
+
+
+    //Distinguish between actors
 }
