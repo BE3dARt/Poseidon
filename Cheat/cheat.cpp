@@ -137,6 +137,7 @@ HRESULT Cheat::Renderer::PresentHook(IDXGISwapChain* swapChain, UINT syncInterva
             const auto levels = world->Levels;
             if (!levels.Data) break;
             const auto localLoc = localCharacter->K2_GetActorLocation();
+            const auto localRot = localCharacter->K2_GetActorRotation();
            
             bool isWieldedWeapon = false;
             auto item = localCharacter->GetWieldedItem();
@@ -268,18 +269,25 @@ HRESULT Cheat::Renderer::PresentHook(IDXGISwapChain* swapChain, UINT syncInterva
                         //Barrels
                         if (cfg.visuals.barrels.bEnable && actor->isBarrel()) {
 
+                            ImVec4 localColor = IsActiveActor(localController, actor, cfg.visuals.barrels.textCol);
+
                             auto location = actor->K2_GetActorLocation();
+                            auto rotation = actor->K2_GetActorRotation();
+
+                            const char* directions[] = { "N", "NE", "E", "SE", "S", "SW", "W", "NW" };
+                            int yaw = ((int)cameraRot.Yaw + 450) % 360;
+                            int index = int(yaw + 22.5f) % 360 * 0.0222222f;
+
                             FVector2D screen;
                             if (localController->ProjectWorldLocationToScreen(location, screen))
                             {
                                 const int dist = localLoc.DistTo(location) * 0.01f;
+
                                 char name[0x64];
-                                sprintf_s(name, "Barrel [%d]", dist);
+                                sprintf_s(name, "Storage Container [%d] [%]", dist, const_cast<char*>(directions[index]));
 
-                                Drawing::RenderText(name, screen, cfg.visuals.items.textCol);
+                                Drawing::RenderText(name, screen, localColor);
                             };
-
-                            IsInFrontofMe(localController, actor, cfg.visuals.items.textCol);
 
                             continue;
                         }
@@ -780,8 +788,6 @@ HRESULT Cheat::Renderer::PresentHook(IDXGISwapChain* swapChain, UINT syncInterva
             //Compass
             if (cfg.visuals.client.bCompass)
             {
-
-                //float dist = cameraLoc.DistTo(location);
 
                 const char* directions[] = { "N", "NE", "E", "SE", "S", "SW", "W", "NW" };
                 int yaw = ((int)cameraRot.Yaw + 450) % 360;

@@ -74,11 +74,10 @@ bool DisplayAimHelper(AController * const localController, ACharacter* const act
 
 }
 
-ACharacter* test = nullptr;
-float deviationFromCenterMin = 10000;
-
 //Check if given actor is in center of screen
-bool IsInFrontofMe(AController* const localController, ACharacter* const actor, ImVec4 colorText) {
+ACharacter* activeCharacter = nullptr;
+float deviationFromCenterMin = 10000;
+ImVec4 IsActiveActor(AController* const localController, ACharacter* const actor, ImVec4 color) {
 
     float Screensize[2] = { 1920, 1080 };
 
@@ -87,55 +86,55 @@ bool IsInFrontofMe(AController* const localController, ACharacter* const actor, 
 
     FVector2D center;
     if (!localController->ProjectWorldLocationToScreen({ origin.X, origin.Y, origin.Z + extent.Z }, center)) {
-        return false;
+        return color;
     }
     
-    /*
-    //Make active when in center of screen (Multiple Targets possible)
-    if (center.X >= (Screensize[0] / 6) * 2 && center.X <= (Screensize[0] / 6) * 4 && center.Y >= (Screensize[1] / 4) * 1 && center.Y <= (Screensize[1] / 4) * 3)
-    {
-        char name[0x64];
-        sprintf_s(name, "Center: [%f], [%f]", center.X, center.Y);
-        Cheat::Renderer::Drawing::RenderText(name, center, colorText);
-    }
-    */
-
     //1 Abweichung zur Mitte berechnen
     float deviation[2] = { abs(center.X - (Screensize[0] / 2)), abs(center.Y - (Screensize[1] / 2)) };
 
     //Distance zur Mitte berechnen (Satz des Pythagoras)
     float distance = sqrt((deviation[0] * deviation[0]) + (deviation[1] * deviation[1]));
 
-    if (test != nullptr)
+    if (activeCharacter != nullptr)
     {
-        if (test == actor)
+        if (activeCharacter == actor)
         {
             deviationFromCenterMin = distance;
+
+            color.x = 1.f;
+            color.y = 0.f;
+            color.z = 0.f;
+
+            return color;
         }
         else
         {
 
             if (deviationFromCenterMin > distance)
             {
-                test = actor;
+                activeCharacter = actor;
                 deviationFromCenterMin = distance;
+
+                color.x = 1.f;
+                color.y = 0.f;
+                color.z = 0.f;
+
+                return color;
             }
             else
             {
-                return false;
+                return color;
             }
         }
 
-        char name[0x64];
-        sprintf_s(name, "Distance: [%f]", distance);
-        Cheat::Renderer::Drawing::RenderText(name, center, colorText);
+        //char name[0x64];
+        //sprintf_s(name, "Distance: [%f]", distance);
+        //Cheat::Renderer::Drawing::RenderText(name, center, colorText);
     }
     else
     {
-        test = actor;
+        activeCharacter = actor;
     }
 
-
-
-    //Distinguish between actors
+    return color;
 }

@@ -88,6 +88,8 @@ public:
             struct {
                 bool bEnable = false;
                 ImVec4 textCol = { 1.f, 1.f, 1.f, 1.f };
+                ImVec4 colorVis = { 0.f, 1.f, 0.5f, 1.f };
+                ImVec4 colorInv = { 0.7f, 1.f, 0.f, 1.f };
             } barrels;
             struct {
                 bool bAimHelp = false;
