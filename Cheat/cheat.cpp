@@ -202,7 +202,7 @@ HRESULT Cheat::Renderer::PresentHook(IDXGISwapChain* swapChain, UINT syncInterva
 
                                     if (delta.Pitch < -35.f || delta.Pitch > 67.f || abs(delta.Yaw) > 50.f) { break; }
                                     FRotator diff = delta - harpoon->rotation;
-                                    float absPitch = abs(diff.Pitch);
+                                    float absPitch = abs(diff.Pitch);   
                                     float absYaw = abs(diff.Yaw);
                                     if (absPitch > cfg.aim.harpoon.fPitch || absYaw > cfg.aim.harpoon.fYaw) { break; }
                                     float sum = absYaw + absPitch;
@@ -278,6 +278,8 @@ HRESULT Cheat::Renderer::PresentHook(IDXGISwapChain* swapChain, UINT syncInterva
 
                                 Drawing::RenderText(name, screen, cfg.visuals.items.textCol);
                             };
+
+                            IsInFrontofMe(localController, actor, cfg.visuals.items.textCol);
 
                             continue;
                         }

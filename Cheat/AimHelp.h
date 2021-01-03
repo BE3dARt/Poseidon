@@ -20,7 +20,7 @@ bool DisplayAimHelper(AController * const localController, ACharacter* const act
     }
 
     FVector2D footPos;
-    if (!localController->ProjectWorldLocationToScreen({ origin.X, origin.Y, origin.Z + extent.Z }, footPos)) {
+    if (!localController->ProjectWorldLocationToScreen({ origin.X, origin.Y, origin.Z - extent.Z }, footPos)) {
         return false;
     }
 
@@ -72,4 +72,28 @@ bool DisplayAimHelper(AController * const localController, ACharacter* const act
     }
     }
 
+}
+
+//Check if given actor is in center of screen
+bool IsInFrontofMe(AController* const localController, ACharacter* const actor, ImVec4 colorText) {
+
+    //Screensize x: 1920
+    //Screensize y: 1080
+
+    float Screensize[2] = { 1920, 1080 };
+
+    FVector origin, extent;
+    actor->GetActorBounds(true, origin, extent);
+
+    FVector2D center;
+    if (!localController->ProjectWorldLocationToScreen({ origin.X, origin.Y, origin.Z + extent.Z }, center)) {
+        return false;
+    }
+
+    if (center.X >= (Screensize[0] / 6) * 2 && center.X <= (Screensize[0] / 6) * 4 && center.Y >= (Screensize[1] / 4) * 1 && center.Y <= (Screensize[1] / 4) * 3)
+    {
+        char name[0x64];
+        sprintf_s(name, "Center: [%f], [%f]", center.X, center.Y);
+        Cheat::Renderer::Drawing::RenderText(name, center, colorText);
+    }
 }
