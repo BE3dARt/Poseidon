@@ -11,7 +11,7 @@ When something (or everything) does not work after a patch of the game, it is mo
 1. Find the most recent [SDK](https://github.com/pubgsdk) for the game.
 
 2. Itentify the error in the mod menu's SDK; For example:
-
+```
 char pad4[0x3B8]; // 0x04E8 (HEX)
 UWieldedItemComponent* WieldedItemComponent; // 0x08A0 (HEX)
 ```
