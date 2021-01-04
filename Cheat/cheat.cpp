@@ -275,8 +275,10 @@ HRESULT Cheat::Renderer::PresentHook(IDXGISwapChain* swapChain, UINT syncInterva
                             auto rotation = actor->K2_GetActorRotation();
 
                             const char* directions[] = { "N", "NE", "E", "SE", "S", "SW", "W", "NW" };
-                            int yaw = ((int)cameraRot.Yaw + 450) % 360;
+                            int yaw = ((int)rotation.Yaw + 450) % 360;
                             int index = int(yaw + 22.5f) % 360 * 0.0222222f;
+
+                            //const char* test[] = const_cast<char*>(directions[index]);
 
                             FVector2D screen;
                             if (localController->ProjectWorldLocationToScreen(location, screen))
@@ -284,7 +286,8 @@ HRESULT Cheat::Renderer::PresentHook(IDXGISwapChain* swapChain, UINT syncInterva
                                 const int dist = localLoc.DistTo(location) * 0.01f;
 
                                 char name[0x64];
-                                sprintf_s(name, "Storage Container [%d] [%]", dist, const_cast<char*>(directions[index]));
+                                sprintf_s(name, "Storage Container [%d] [%s]", dist, const_cast<char*>(directions[index]));
+                                //sprintf_s(name, "Storage Container [%d]", dist);
 
                                 Drawing::RenderText(name, screen, localColor);
                             };
