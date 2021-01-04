@@ -33,8 +33,8 @@
   <PropertyGroup Label="UserMacros" />
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
     <LinkIncremental>false</LinkIncremental>
-    <IncludePath>$(SolutionDir)include;$(IncludePath)</IncludePath>
-    <LibraryPath>$(SolutionDir)lib;$(LibraryPath)</LibraryPath>
+    <IncludePath>$(SolutionDir)Sources\include;$(IncludePath)</IncludePath>
+    <LibraryPath>$(SolutionDir)Sources\lib;$(LibraryPath)</LibraryPath>
     <OutDir>$(SolutionDir)Deployment</OutDir>
     <IntDir>$(Configuration)\</IntDir>
   </PropertyGroup>
@@ -68,12 +68,12 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
-    <ClCompile Include="..\include\imgui\imgui.cpp" />
-    <ClCompile Include="..\include\imgui\imgui_draw.cpp" />
-    <ClCompile Include="..\include\imgui\imgui_impl_dx11.cpp" />
-    <ClCompile Include="..\include\imgui\imgui_impl_win32.cpp" />
-    <ClCompile Include="..\include\imgui\imgui_widgets.cpp" />
-    <ClCompile Include="..\include\UE4\UE4.cpp" />
+    <ClCompile Include="..\..\Sources\include\imgui\imgui.cpp" />
+    <ClCompile Include="..\..\Sources\include\imgui\imgui_draw.cpp" />
+    <ClCompile Include="..\..\Sources\include\imgui\imgui_impl_dx11.cpp" />
+    <ClCompile Include="..\..\Sources\include\imgui\imgui_impl_win32.cpp" />
+    <ClCompile Include="..\..\Sources\include\imgui\imgui_widgets.cpp" />
+    <ClCompile Include="..\..\Sources\include\UE4\UE4.cpp" />
     <ClCompile Include="cheat.cpp" />
     <ClCompile Include="main.cpp" />
     <ClCompile Include="SDK.cpp" />

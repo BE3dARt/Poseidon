@@ -186,7 +186,6 @@ public:
 	UProperty* PostConstructLinkNext;
 };
 
-
 class UStruct : public UField
 {
 public:
@@ -376,10 +375,19 @@ struct FKey
 
 struct AController {
 
+	//Kommt von 0 her
 	char pad_0000[0x0488]; //0x0000
 	class ACharacter* Character; //0x0488
+
+	//+08 = 490
+
+	//Kommt von 490 her
 	char pad_0480[0x70]; // 0x490
 	APlayerCameraManager* PlayerCameraManager; //0x0500
+
+	//+08 = 508
+
+	//Kommt von 508 her
 	char pad_04f8[0x1049]; // 0x0508
 	bool IdleDisconnectEnabled; // 0x1551(0x0001)
 
@@ -774,18 +782,23 @@ class ACharacter : public UObject {
 public:
 	
 	char pad1[0x468]; // 0x28
-	APlayerState* PlayerState;  // 0x0490
+	APlayerState* PlayerState;  // 0x0490 Correct
+
 	char pad2[0x10]; // 0x0498
-	AController* Controller; // 0x04A8
+	AController* Controller; // 0x04A8 Correct
+
 	char pad3[0x28]; // 0x4B0
-	USkeletalMeshComponent* Mesh; // 0x04D8
-	UCharacterMovementComponent* CharacterMovement; // 0x04E0
-	char pad4[0x3B8]; // 0x4E8
-	UWieldedItemComponent* WieldedItemComponent; // 0x08A0
-	char pad5[0x20]; // 0x08A8
-	UHealthComponent* HealthComponent; // 0x08C8
-	char pad6[0x428]; // 0x8D0
-	UDrowningComponent* DrowningComponent; // 0x0CF8
+	USkeletalMeshComponent* Mesh; // 0x04D8 Coorect, does not need new pad because +8
+	UCharacterMovementComponent* CharacterMovement; // 0x04E0 Correct
+
+	char pad4[0x3C8]; // 0x04E8 (Muss 3C8)
+	UWieldedItemComponent* WieldedItemComponent; // 0x08A0 (Muss 08B0)
+
+	char pad5[0x20]; // 0x08A8 (8B8)
+	UHealthComponent* HealthComponent; // 0x08C8 (08D8)
+
+	char pad6[0x428]; // 0x8D0 (8E0)
+	UDrowningComponent* DrowningComponent; // 0x0CF8 (0D08)
 
 	void ReceiveTick(float DeltaSeconds)
 	{

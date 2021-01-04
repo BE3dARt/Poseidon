@@ -23,25 +23,25 @@
     <ClCompile Include="cheat.cpp">
       <Filter>Sources</Filter>
     </ClCompile>
-    <ClCompile Include="..\include\imgui\imgui_widgets.cpp">
-      <Filter>Sources\imgui</Filter>
-    </ClCompile>
-    <ClCompile Include="..\include\imgui\imgui_impl_win32.cpp">
-      <Filter>Sources\imgui</Filter>
-    </ClCompile>
-    <ClCompile Include="..\include\imgui\imgui_impl_dx11.cpp">
-      <Filter>Sources\imgui</Filter>
-    </ClCompile>
-    <ClCompile Include="..\include\imgui\imgui_draw.cpp">
-      <Filter>Sources\imgui</Filter>
-    </ClCompile>
-    <ClCompile Include="..\include\imgui\imgui.cpp">
-      <Filter>Sources\imgui</Filter>
-    </ClCompile>
     <ClCompile Include="SDK.cpp">
       <Filter>Sources</Filter>
     </ClCompile>
-    <ClCompile Include="..\include\UE4\UE4.cpp">
+    <ClCompile Include="..\..\Sources\include\imgui\imgui.cpp">
+      <Filter>Sources\imgui</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\Sources\include\imgui\imgui_draw.cpp">
+      <Filter>Sources\imgui</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\Sources\include\imgui\imgui_impl_dx11.cpp">
+      <Filter>Sources\imgui</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\Sources\include\imgui\imgui_impl_win32.cpp">
+      <Filter>Sources\imgui</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\Sources\include\imgui\imgui_widgets.cpp">
+      <Filter>Sources\imgui</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\Sources\include\UE4\UE4.cpp">
       <Filter>Sources\UE4</Filter>
     </ClCompile>
   </ItemGroup>
