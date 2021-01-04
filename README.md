@@ -1,8 +1,14 @@
 # Poseidon
 
-A WIP Mod Menu for (...). It's so WIP that it crashes the when certain buttons are pressed, so don't use it right now. 
+A WIP **Mod Menu** for *(...)*. It's so WIP that it crashes the when certain buttons are pressed, so don't use it right now. 
 
 I will also add installation and user guidance once I believe the menu is ready for deployment.
+
+## Features
+
+* ESP
+* Aim assistant for the cannon (Bot would get you banned)
+* Information on ships, AI and other players
 
 ## How To Edit Wrong Memory References
 
@@ -10,7 +16,7 @@ When something (or everything) does not work after a patch of the game, it is mo
 
 **1** Find the most recent [SDK](https://github.com/pubgsdk) for the game.
 
-**2** Itentify the error in the mod menu's SDK; For example:
+**2** Identify the error in the mod menu's SDK; For example:
 ```
 char pad4[0x3B8]; // 0x04E8 (HEX)
 UWieldedItemComponent* WieldedItemComponent; // 0x08A0 (HEX)
@@ -38,7 +44,7 @@ char pad4[0x3C8]; // 0x04E8
 UWieldedItemComponent* WieldedItemComponent; // 0x08B0 (HEX)
 ```
 
-**6** You NEED to adjust the following addresses too. After every object you defined, the memory also jumps by 08 (HEX). Meaning your next pad starts the summand from before later:
+**6** You NEED to adjust the following addresses too. After every object you have defined, the memory also jumps by 08 (HEX); Meaning your next pad starts the summand from before later:
 ```
 char pad4[0x3C8]; // 0x04E8
 UWieldedItemComponent* WieldedItemComponent; // 0x08B0 (HEX)
