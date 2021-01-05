@@ -83,6 +83,9 @@
     <ClInclude Include="cheat.h" />
     <ClInclude Include="Depricated.h" />
     <ClInclude Include="Logger.h" />
+    <ClInclude Include="Offsets.h">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">false</ExcludedFromBuild>
+    </ClInclude>
     <ClInclude Include="Renderer.h" />
     <ClInclude Include="SDK.h" />
     <ClInclude Include="Tools.h" />

@@ -147,11 +147,13 @@ HRESULT Cheat::Renderer::PresentHook(IDXGISwapChain* swapChain, UINT syncInterva
            auto const localWeapon = *reinterpret_cast<AProjectileWeapon**>(&item);
            ACharacter* attachObject = localCharacter->GetAttachParentActor();
 
+           /*
            bool isHarpoon = false;
            if (attachObject)
            {
                if (cfg.aim.harpoon.bEnable && attachObject->isHarpoon()) { isHarpoon = true; }
            }
+           */
 
            cache.good = true;
 
@@ -179,6 +181,8 @@ HRESULT Cheat::Renderer::PresentHook(IDXGISwapChain* swapChain, UINT syncInterva
                 {
                     auto const actor = actors[a];
                     if (!actor) continue;
+
+                    /*
                     if (cfg.aim.bEnable)
                     {
                         //Aimbot for Harpoon
@@ -219,6 +223,8 @@ HRESULT Cheat::Renderer::PresentHook(IDXGISwapChain* swapChain, UINT syncInterva
                             }
                         }
                     }
+
+                    */
                     
                     if (cfg.visuals.client.bDebug)
                     {
@@ -818,7 +824,7 @@ HRESULT Cheat::Renderer::PresentHook(IDXGISwapChain* swapChain, UINT syncInterva
                     drawList->AddLine({ io.DisplaySize.x * 0.5f , io.DisplaySize.y * 0.5f }, { screen.X, screen.Y }, col);
                     drawList->AddCircle({ screen.X, screen.Y }, 3.f, col);
                 }
-
+                /*
                 if (ImGui::IsMouseDown(1))
                 {
                     
@@ -828,13 +834,13 @@ HRESULT Cheat::Renderer::PresentHook(IDXGISwapChain* swapChain, UINT syncInterva
                         //reinterpret_cast<AHarpoonLauncher*>(attachObject)->rotation = aimBest.delta;
                     }
                     else {
-                        /*
-                        * LV - Local velocity
-                        * TV - Target velocity
-                        * RV - Target relative velocity
-                        * BS - Bullet speed
-                        * RL - Relative local location
-                        */
+                        
+                        //LV - Local velocity
+                        //TV - Target velocity
+                        //RV - Target relative velocity
+                        //BS - Bullet speed
+                        //RL - Relative local location
+                        
                         FVector LV = localCharacter->GetVelocity();
                         if (auto const localShip = localCharacter->GetCurrentShip()) {
                             LV += localShip->GetVelocity();
@@ -868,7 +874,7 @@ HRESULT Cheat::Renderer::PresentHook(IDXGISwapChain* swapChain, UINT syncInterva
 
                     }
                 }
-               
+                */
             }
 
             if (!localController->IdleDisconnectEnabled && !(cfg.misc.bEnable && cfg.misc.client.bEnable && cfg.misc.client.bIdleKick))

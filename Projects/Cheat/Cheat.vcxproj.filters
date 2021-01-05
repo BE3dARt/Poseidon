@@ -67,5 +67,8 @@
     <ClInclude Include="Depricated.h">
       <Filter>Headers</Filter>
     </ClInclude>
+    <ClInclude Include="Offsets.h">
+      <Filter>Headers</Filter>
+    </ClInclude>
   </ItemGroup>
 </Project>

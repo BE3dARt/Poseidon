@@ -2,6 +2,7 @@
 #include <Windows.h>
 #include <UE4/UE4.h>
 #include <string>
+#include "Offsets.h"
 
 #ifdef _MSC_VER
 #pragma pack(push, 0x8)
@@ -107,6 +108,7 @@ struct TUObjectArray
 };
 
 class UClass;
+
 class UObject
 {
 public:
@@ -178,7 +180,7 @@ public:
 	int ArrayDim;
 	int ElementSize;
 	uint64_t PropertyFlags;
-	char pad[0xC];
+	char pad[UPROPERTY];
 	int Offset_Internal;
 	UProperty* PropertyLinkNext;
 	UProperty* NextRef;
@@ -217,10 +219,9 @@ public:
 	UProperty* FirstPropertyToInit;
 	UFunction* EventGraphFunction; //0x00A0
 	int EventGraphCallOffset;
-	char pad_0x00AC[0x4]; //0x00AC
+	char pad_0x00AC[UFUNCTION]; //0x00AC
 	void* Func; //0x00B0
 };
-
 
 inline void ProcessEvent(void* obj, UFunction* function, void* parms) 
 {
@@ -279,7 +280,6 @@ public:
 	}
 };
 
-
 enum class EPlayerActivityType : uint8_t
 {
 	None = 0,
@@ -311,7 +311,7 @@ struct FPirateDescription
 };
 
 struct APlayerState {
-	char pad[0x0478]; // 0x0
+	char pad[PLAYERNAME]; // 0x0
 	FString PlayerName; // 0x0478
 
 	EPlayerActivityType GetPlayerActivity()
@@ -335,18 +335,18 @@ struct APlayerState {
 struct FMinimalViewInfo {
 	FVector Location;
 	FRotator Rotation;
-	char UnknownData00[0x10];
+	char UnknownData00[_FOV];
 	float FOV;
 };
 
 struct FCameraCacheEntry {
 	float TimeStamp;
-	char pad[0xC];
-	FMinimalViewInfo POV;
+	char UnknownData00[_POV];
+	FMinimalViewInfo POV;	
 };
 
 struct APlayerCameraManager {
-	char pad[0x04D0];
+	char pad[CAMERACACHE];
 	FCameraCacheEntry CameraCache;
 
 	FVector GetCameraLocation() {
@@ -363,11 +363,10 @@ struct APlayerCameraManager {
 	}
 };
 
-
 struct FKey
 {
 	FName KeyName;
-	unsigned char UnknownData00[0x18] = {};
+	unsigned char UnknownData00[KEYNAME] = {};
 
 	FKey() {};
 	FKey(const char* InName) : KeyName(FName(InName)) {}
@@ -376,19 +375,19 @@ struct FKey
 struct AController {
 
 	//Kommt von 0 her
-	char pad_0000[0x0488]; //0x0000
+	char pad_0000[CHARACTER]; //0x0000
 	class ACharacter* Character; //0x0488
 
 	//+08 = 490
 
 	//Kommt von 490 her
-	char pad_0480[0x70]; // 0x490
+	char pad_0480[PLAYERCAMERAMANAGER]; // 0x490
 	APlayerCameraManager* PlayerCameraManager; //0x0500
 
 	//+08 = 508
 
 	//Kommt von 508 her
-	char pad_04f8[0x1049]; // 0x0508
+	char pad_04f8[IDLEDISCONNECTENABLED]; // 0x0508
 	bool IdleDisconnectEnabled; // 0x1551(0x0001)
 
 	void SendToConsole(FString& cmd){
@@ -483,9 +482,10 @@ struct UHealthComponent {
 		return health;
 	};
 };
+
 struct USkeletalMeshComponent {
-	char pad[0x590];
-	TArray<FTransform> SpaceBasesArray[2];
+	char pad[SPACEBASESARRAY];
+	TArray<FTransform> SpaceBasesArray[2]; //TArray<class USkeletalMeshComponent*>SkelMeshComponents; maybe
 	int CurrentEditableSpaceBases;
 	int CurrentReadSpaceBases;
 
@@ -532,7 +532,7 @@ struct AShipInternalWater {
 };
 
 struct AHullDamage {
-	char pad[0x04B8];
+	char pad[ACTIVEHULLDAMAGEZONES];
 	TArray<class ACharacter*> ActiveHullDamageZones;
 };
 
@@ -546,7 +546,7 @@ struct UDrowningComponent {
 };
 
 struct AFauna {
-	char pad1[0x0898];
+	char pad1[DISPLAYNAME];
 	FString* DisplayName; // 0x0898
 };
 
@@ -560,77 +560,75 @@ enum class ESwimmingCreatureType : uint8_t
 };
 
 struct ASharkPawn {
-	char pad1[0x0550];
+	char pad1[USKELETALMESHCOMPONENT];
 	USkeletalMeshComponent* Mesh; // 0x0550
-	char pad2[0x5C]; // 0x0558
+	char pad2[SWIMMINGCREATURETYPE]; // 0x0558
 	ESwimmingCreatureType SwimmingCreatureType; // 0x05B4
 };
 
-
 struct FAIEncounterSpecification
 {
-	char pad[0x80];
+	char pad[LOCALISABLENAME];
 	FString* LocalisableName; // 0x0080
 };
 
-
 struct UItemDesc {
-	char pad[0x0028];
+	char pad[TITLE];
 	FString* Title; // 0x0028(0x0038)
 };
 
 struct AItemInfo {
-	char pad[0x04C8];
+	char pad[DESC];
 	UItemDesc* Desc; // 0x04C8
 };
 
 struct UWieldedItemComponent {
-	char pad[0x0298]; // 0x0
+	char pad[CURRENTLYWIELDEDITEM]; // 0x0
 	ACharacter* CurrentlyWieldedItem; // 0x0298
 };
 
 struct FWeaponProjectileParams {
-	char pad[0x10]; 
+	char pad[VELOCITY];
 	float Velocity;
 };
 
 struct FProjectileWeaponParameters {
-	char pad[0x0054];
+	char pad[PROJECTILEMAXIMUMRANGE];
 	float ProjectileMaximumRange;  // 0x0054
-	char pad2[0x18]; // 0x58
+	char pad2[AMMOPARAMS]; // 0x58
 	FWeaponProjectileParams AmmoParams; // 0x0070
 };
 
 struct AProjectileWeapon {
-	char pad[0x0848]; // 0
+	char pad[WEAPONPARAMETERS]; // 0
 	FProjectileWeaponParameters WeaponParameters; // 0x0848
 };
 
 struct UWorldMapIslandDataAsset {
-	char pad[0x48];
+	char pad[WORLDSPACECAMERAPOSITION];
 	FVector WorldSpaceCameraPosition; // 0x48
 };
 
 struct UIslandDataAssetEntry {
-	char pad[0x40];
+	char pad[WORLDMAPDATA];
 	UWorldMapIslandDataAsset* WorldMapData; // 0x0040
-	char pad2[0x68]; // 0x48
+	char pad2[LOCALISEDNAME]; // 0x48
 	FString* LocalisedName; // 0x00B0
 };
 
 struct UIslandDataAsset
 {
-	char pad[0x0048];
+	char pad[ISLANDDATAENTRIES];
 	TArray<UIslandDataAssetEntry*> IslandDataEntries; // 0x0048
 };
 
 struct AIslandService {
-	char pad[0x04E8];
+	char pad[ISLANDDATAASSET];
 	UIslandDataAsset* IslandDataAsset; // 0x04E8
 };
 
 struct ASlidingDoor {
-	char pad_0x0[0x05CC];
+	char pad_0x0[INITIALDOORMESHLOCATION];
 	FVector InitialDoorMeshLocation; // 0x0514
 	void OpenDoor() {
 		static auto fn = UObject::FindObject<UFunction>("Function Athena.SkeletonFortDoor.OpenDoor");
@@ -648,19 +646,19 @@ struct USceneComponent {
 };
 
 struct APuzzleVault {
-	char pad[0x1090];
+	char pad[OUTERDOOR];
 	ASlidingDoor* OuterDoor; // 0x1080
 };
 
 struct FCrew
 {
-	char pad[0x20];
+	char pad[PLAYERS];
 	TArray<APlayerState*> Players;                                                  // 0x0020(0x0010) (ZeroConstructor)
-	char pad2[0x50];
+	char pad2[PLAYERS_];
 };
 
 struct ACrewService {
-	char pad[0x0638];
+	char pad[CREWS];
 	TArray<FCrew> Crews; // 0x0638
 };
 
@@ -677,7 +675,7 @@ struct AShipService
 
 struct AKrakenService
 {
-	char pad[0x05B8];
+	char pad[KRAKEN];
 	class AKraken* Kraken; // 0x05B8(0x0008)
 	bool IsKrakenActive() {
 		static auto fn = UObject::FindObject<UFunction>("Function Kraken.KrakenService.IsKrakenActive");
@@ -704,7 +702,7 @@ struct AKrakenService
 };
 
 struct AAthenaGameState {
-	char pad[0x0658];
+	char pad[WINDSERVICE];
 	UINT64* WindService; // 0x0658
 	UINT64* PlayerManagerService; // 0x0660
 	AShipService* ShipService; // 0x0668
@@ -759,7 +757,6 @@ struct UCharacterMovementComponent {
 	}
 };
 
-
 struct AHarpoonLauncher {
 	char pad[0x0BA0];
 	FRotator rotation;
@@ -777,27 +774,26 @@ struct AHarpoonLauncher {
 	}
 };
 
-
 class ACharacter : public UObject {
 public:
 	
-	char pad1[0x468]; // 0x28
+	char pad1[PLAYERSTATE]; // 0x28 Whyyy?
 	APlayerState* PlayerState;  // 0x0490 Correct
 
-	char pad2[0x10]; // 0x0498
+	char pad2[CONTROLLER]; // 0x0498
 	AController* Controller; // 0x04A8 Correct
 
-	char pad3[0x28]; // 0x4B0
+	char pad3[MESH]; // 0x4B0
 	USkeletalMeshComponent* Mesh; // 0x04D8 Coorect, does not need new pad because +8
 	UCharacterMovementComponent* CharacterMovement; // 0x04E0 Correct
 
-	char pad4[0x3C8]; // 0x04E8 (Muss 3C8)
+	char pad4[WIELDEDITEMCOMPONENT]; // 0x04E8 (Muss 3C8)
 	UWieldedItemComponent* WieldedItemComponent; // 0x08A0 (Muss 08B0)
 
-	char pad5[0x20]; // 0x08A8 (8B8)
+	char pad5[HEALTHCOMPONENT]; // 0x08A8 (8B8)
 	UHealthComponent* HealthComponent; // 0x08C8 (08D8)
 
-	char pad6[0x428]; // 0x8D0 (8E0)
+	char pad6[DROWNINGCOMPONENT]; // 0x8D0 (8E0)
 	UDrowningComponent* DrowningComponent; // 0x0CF8 (0D08)
 
 	void ReceiveTick(float DeltaSeconds)
@@ -986,8 +982,6 @@ public:
 	}
 };
 
-
-
 class UKismetMathLibrary {
 private:
 	static inline UClass* defaultObj;
@@ -1092,34 +1086,33 @@ public:
 };
 
 struct UPlayer {
-	char UnknownData00[0x30];
+	char UnknownData00[PLAYERCONTROLLER];
 	AController* PlayerController;
 };
 
 struct UGameInstance {
-	char UnknownData00[0x38];
+	char UnknownData00[LOCALPLAYER];
 	TArray<UPlayer*> LocalPlayers; // 0x38
 };
 
 struct ULevel {
-	char UnknownData00[0xA0];
+	char UnknownData00[AACTORS];
 	TArray<ACharacter*> AActors;
 };
 
 struct UWorld {
 	static inline UWorld** GWorld = nullptr;
-	char pad[0x30]; // 0x0
+	char pad[PERSISTENTLEVEL]; // 0x0
 	ULevel* PersistentLevel; // 0x30
-	char pad_0028[0x20];  // 0x38
+	char pad_0028[GAMESTATE];  // 0x38
 	AAthenaGameState* GameState; //0x0058
-	char pad_0060[0xF0]; //0x0060
+	char pad_0060[LEVELS]; //0x0060
 	TArray<ULevel*> Levels; //0x0150
-	char pad_0160[80]; //0x0160
+	char pad_0160[CURRENTLEVEL]; //0x0160
 	ULevel* CurrentLevel; //0x01B0
-	char pad_01B8[8]; //0x01B8
+	char pad_01B8[GAMEINSTANCE]; //0x01B8
 	UGameInstance* GameInstance; //0x01C0
 };
-
 
 #ifdef _MSC_VER
 #pragma pack(pop)
