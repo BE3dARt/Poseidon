@@ -737,7 +737,7 @@ HRESULT Cheat::Renderer::PresentHook(IDXGISwapChain* swapChain, UINT syncInterva
                 }
             }
 
-            //Islands (BROKE)
+            //Islands
             if (cfg.visuals.islands.bEnable)
             {
                 do {
@@ -747,22 +747,25 @@ HRESULT Cheat::Renderer::PresentHook(IDXGISwapChain* swapChain, UINT syncInterva
                     if (!islandDataAsset) break;
                     auto const islandDataEntries = islandDataAsset->IslandDataEntries;
                     if (!islandDataEntries.Data) break;
-                    for (auto i = 0u; i < islandDataEntries.Count; i++)
+     
+                    for (auto i = 0u; i < islandDataEntries.Count && i < 120; i++)
                     {
                         auto const island = islandDataEntries[i];
                         auto const WorldMapData = island->WorldMapData;
                         if (!WorldMapData) continue;
-
+                        
                         const FVector islandLoc = WorldMapData->WorldSpaceCameraPosition;
                         const int dist = localLoc.DistTo(islandLoc) * 0.01f;
 
-                        if (dist > cfg.visuals.islands.intMaxDist) continue;
+                        if (dist > cfg.visuals.islands.intMaxDist) {
+                            continue;
+                        }
+
                         FVector2D screen;
                         if (localController->ProjectWorldLocationToScreen(islandLoc, screen))
                         {
                             char name[0x64];
                             auto len = island->LocalisedName->multi(name, 0x50);
-
 
                             snprintf(name + len, sizeof(name) - len, " [%d]", dist);
                             Drawing::RenderText(name, screen, cfg.visuals.islands.textCol);
