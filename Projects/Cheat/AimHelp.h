@@ -138,3 +138,19 @@ ImVec4 IsActiveActor(AController* const localController, ACharacter* const actor
 
     return color;
 }
+
+//Get orientation of actor
+std::string getOrientation(ACharacter* const actor) {
+
+    auto rotation = actor->K2_GetActorRotation();
+    const char* directions[] = { "N", "NE", "E", "SE", "S", "SW", "W", "NW" };
+    int yaw = ((int)rotation.Yaw + 450) % 360;
+    int index = int(yaw + 22.5f) % 360 * 0.0222222f;
+
+    char name[0x40];
+    sprintf_s(name, "[%d° (%s)]", yaw, const_cast<char*>(directions[index]));
+
+    std::string returnString = name;
+    return returnString;
+
+}

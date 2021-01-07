@@ -644,19 +644,27 @@ HRESULT Cheat::Renderer::PresentHook(IDXGISwapChain* swapChain, UINT syncInterva
                         //Function Athena.ShipService.GetNumShips 
                         else if (actor->isShip() && (cfg.visuals.ships.bName || cfg.visuals.ships.bDamage))
                         {
-                            const FVector location = actor->K2_GetActorLocation();
+
+                            auto location = actor->K2_GetActorLocation();
                             const int dist = localLoc.DistTo(location) * 0.01f;
+
+                            std::string orientation = getOrientation(actor);
 
                             //Show Name + Water 
                             if (cfg.visuals.ships.bName && dist <= 1500)
                             {
                                 FVector2D screen;
                                 if (localController->ProjectWorldLocationToScreen(location, screen)) {
+
+                                    //Calculate Water amount
                                     int amount = 0;
                                     auto water = actor->GetInternalWater();
-                                    if (water) amount = water->GetNormalizedWaterAmount() * 100.f;
+                                    if (water) {
+                                        amount = water->GetNormalizedWaterAmount() * 100.f;
+                                    }
+
                                     char name[0x40];
-                                    sprintf_s(name, "Ship (%d%%) [%d]", amount, dist);
+                                    sprintf_s(name, "Ship (%d%%) [%d] [%s]", amount, dist, orientation.c_str());
                                     Drawing::RenderText(const_cast<char*>(name), screen, cfg.visuals.ships.textCol);
                                 };
                             }
