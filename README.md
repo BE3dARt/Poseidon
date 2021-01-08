@@ -10,6 +10,12 @@ I will also add installation and user guidance once I believe the menu is ready 
 * Aim assistant for the cannon (Bot would get you banned)
 * Information on ships, AI and other players
 
+## Description
+
+### Injection Method
+
+This mod menu uses a basic *CreateRemoteThread* respectively *LoadLibrary* injection. There is no client-side anti-cheat system in place. So this method is completely safe to use; No need to overcomplicate stuff.
+
 ## How To Edit Wrong Memory References
 
 When something (or everything) does not work after a patch of the game, it is mostly due to a changed memory offset. If that is the case, follow these steps:
